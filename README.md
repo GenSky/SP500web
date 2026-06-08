@@ -15,10 +15,30 @@ Motto:
 - Deadlift
 - Notes
 - Workout count
+- Per-session gym log
+- Done and missed training day tracker
+- Exercise checklists
+- Lift weights
+- Cardio type, time, level, and speed
 - Achievement badges
 - Monthly progress chart
 
 The app uses browser `localStorage`, so entries stay saved in the same browser on the same device. There is no backend, database, login, API key, or paid service.
+
+## Gym Log Workflow
+
+Use the `Gym Log` section every time you go to the gym.
+
+1. Pick the training date.
+2. Confirm the training day.
+3. Set the status to `Done` or `Missed`.
+4. Check off the exercises completed that day.
+5. Enter weights for any lifts performed.
+6. Enter cardio type, minutes, level, and speed when applicable.
+7. Add notes for technique, recovery, pain, energy, or missed work.
+8. Click `Save Gym Log`.
+
+The weekly day tracker shows whether each planned training day is done, missed, or not logged yet. Completed gym logs count toward the workout total and the 100/200 workout achievement badges.
 
 ## Files
 

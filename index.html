@@ -21,6 +21,7 @@
       </a>
       <div class="nav-links">
         <a href="#training">Training</a>
+        <a href="#gym-log">Gym Log</a>
         <a href="#tracker">Tracker</a>
         <a href="#chart">Chart</a>
         <a href="#badges">Badges</a>
@@ -158,6 +159,149 @@
             <li>Walk, mobility, light hike, or easy sport</li>
           </ul>
         </article>
+      </div>
+    </section>
+
+    <section class="section gym-log-section" id="gym-log" aria-labelledby="gym-log-title">
+      <div class="section-heading">
+        <p class="kicker">Gym Log</p>
+        <h2 id="gym-log-title">Track every gym day: done, missed, and what actually happened.</h2>
+      </div>
+
+      <div class="week-tracker" id="week-tracker" aria-label="This week training tracker"></div>
+
+      <div class="gym-log-layout">
+        <form class="gym-log-form" id="gym-log-form">
+          <label>
+            Date
+            <input id="log-date" name="date" type="date" required>
+          </label>
+          <label>
+            Training Day
+            <select id="log-day" name="day" required>
+              <option value="Monday">Monday - Squat Practice</option>
+              <option value="Tuesday">Tuesday - StairMaster or Walking</option>
+              <option value="Thursday">Thursday - StairMaster or Walking</option>
+              <option value="Friday">Friday - Deadlift Practice</option>
+              <option value="Saturday">Saturday - Optional Activity</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="log-status" name="status" required>
+              <option value="done">Done</option>
+              <option value="missed">Missed</option>
+            </select>
+          </label>
+
+          <fieldset class="workout-checks">
+            <legend>Workout Checklist</legend>
+            <div id="workout-checklist"></div>
+          </fieldset>
+
+          <div class="lift-input-grid">
+            <label>
+              Squat Weight
+              <input id="log-squat" name="squat" type="number" min="0" max="700" step="5" placeholder="100">
+            </label>
+            <label>
+              Bench Weight
+              <input id="log-bench" name="bench" type="number" min="0" max="700" step="5" placeholder="lbs">
+            </label>
+            <label>
+              Row Weight
+              <input id="log-row" name="row" type="number" min="0" max="700" step="5" placeholder="lbs">
+            </label>
+            <label>
+              Deadlift Weight
+              <input id="log-deadlift" name="deadlift" type="number" min="0" max="900" step="5" placeholder="135">
+            </label>
+            <label>
+              Overhead Press
+              <input id="log-press" name="press" type="number" min="0" max="500" step="5" placeholder="lbs">
+            </label>
+            <label>
+              Pulldown Weight
+              <input id="log-pulldown" name="pulldown" type="number" min="0" max="500" step="5" placeholder="lbs">
+            </label>
+          </div>
+
+          <div class="cardio-input-grid">
+            <label>
+              Cardio Type
+              <select id="log-cardio-type" name="cardioType">
+                <option value="">None</option>
+                <option value="StairMaster">StairMaster</option>
+                <option value="Walking">Walking</option>
+                <option value="Bike">Bike</option>
+                <option value="Elliptical">Elliptical</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>
+              Cardio Time
+              <input id="log-cardio-minutes" name="cardioMinutes" type="number" min="0" max="240" step="1" placeholder="minutes">
+            </label>
+            <label>
+              Level
+              <input id="log-cardio-level" name="cardioLevel" type="number" min="0" max="25" step="0.5" placeholder="level">
+            </label>
+            <label>
+              Speed
+              <input id="log-cardio-speed" name="cardioSpeed" type="number" min="0" max="15" step="0.1" placeholder="mph">
+            </label>
+          </div>
+
+          <label class="wide">
+            Session Notes
+            <textarea id="log-notes" name="notes" rows="4" placeholder="Perfect reps, missed work, pain, energy, cardio details"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit">Save Gym Log</button>
+            <button type="button" class="secondary" id="clear-log-form">Clear Log</button>
+          </div>
+        </form>
+
+        <aside class="gym-log-summary" aria-label="Gym log summary">
+          <div>
+            <span>Completed Sessions</span>
+            <strong id="completed-sessions">0</strong>
+          </div>
+          <div>
+            <span>Missed Sessions</span>
+            <strong id="missed-sessions">0</strong>
+          </div>
+          <div>
+            <span>This Week Done</span>
+            <strong id="week-done">0</strong>
+          </div>
+          <div>
+            <span>This Week Missed</span>
+            <strong id="week-missed">0</strong>
+          </div>
+        </aside>
+      </div>
+
+      <div class="entries-wrap">
+        <h3>Recent Gym Logs</h3>
+        <div class="entries-table" role="region" aria-label="Saved gym logs" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Status</th>
+                <th>Checklist</th>
+                <th>Weights</th>
+                <th>Cardio</th>
+                <th>Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="gym-log-body"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
