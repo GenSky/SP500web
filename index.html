@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PROJECT 50 - EGO LESS STRENGTH, a private long-term fitness tracking dashboard for strength practice, fat loss, and consistency.">
+  <title>PROJECT 50 - EGO LESS STRENGTH</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="hero" id="top">
+    <nav class="topbar" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="PROJECT 50 home">
+        <span class="brand-mark">50</span>
+        <span>
+          <strong>PROJECT 50</strong>
+          <small>EGO LESS STRENGTH</small>
+        </span>
+      </a>
+      <div class="nav-links">
+        <a href="#training">Training</a>
+        <a href="#tracker">Tracker</a>
+        <a href="#chart">Chart</a>
+        <a href="#badges">Badges</a>
+      </div>
+    </nav>
+
+    <section class="hero-grid" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="kicker">Two-year strength and health dashboard</p>
+        <h1 id="hero-title">EGO LESS STRENGTH</h1>
+        <p class="motto">"EARN THE RIGHT TO ADD 5 POUNDS"</p>
+        <p class="hero-text">Slow fat loss, durable technique, and repeatable training for a 48-year-old lifter building consistency one perfect rep at a time.</p>
+      </div>
+
+      <div class="hero-panel" aria-label="Current targets">
+        <div class="meter">
+          <div class="meter-ring" style="--progress: 41deg">
+            <span>213.6</span>
+            <small>lbs now</small>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <span>Goal Weight</span>
+            <strong>200 -> 190</strong>
+          </div>
+          <div>
+            <span>Stretch Range</span>
+            <strong>180-185</strong>
+          </div>
+          <div>
+            <span>Body Fat Target</span>
+            <strong>15-17%</strong>
+          </div>
+          <div>
+            <span>Lean Mass</span>
+            <strong>151.4 lbs</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="section overview" aria-labelledby="overview-title">
+      <div class="section-heading">
+        <p class="kicker">Project 50 Overview</p>
+        <h2 id="overview-title">Train like the goal is still two years away.</h2>
+      </div>
+      <div class="overview-grid">
+        <article class="info-card">
+          <span class="card-icon green">01</span>
+          <h3>Lose Slowly</h3>
+          <p>Target steady progress without sacrificing lean mass, energy, or training quality.</p>
+        </article>
+        <article class="info-card">
+          <span class="card-icon blue">02</span>
+          <h3>Practice Strength</h3>
+          <p>Squat and deadlift are technique practices first. Load is earned only after clean execution.</p>
+        </article>
+        <article class="info-card">
+          <span class="card-icon yellow">03</span>
+          <h3>Protect Consistency</h3>
+          <p>Keep the plan repeatable, recoverable, and boring enough to survive busy weeks.</p>
+        </article>
+        <article class="info-card">
+          <span class="card-icon red">04</span>
+          <h3>Check Ego</h3>
+          <p>No rushed jumps. No sloppy reps. No weight increase without three perfect workouts.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section stats-band" aria-label="Current stats">
+      <div>
+        <span>Age</span>
+        <strong>48</strong>
+      </div>
+      <div>
+        <span>Weight</span>
+        <strong>213.6 lbs</strong>
+      </div>
+      <div>
+        <span>Body Fat</span>
+        <strong>29.1%</strong>
+      </div>
+      <div>
+        <span>Lean Mass</span>
+        <strong>151.4 lbs</strong>
+      </div>
+    </section>
+
+    <section class="section" id="training" aria-labelledby="training-title">
+      <div class="section-heading">
+        <p class="kicker">Weekly Training Schedule</p>
+        <h2 id="training-title">Simple weekly rhythm.</h2>
+      </div>
+      <div class="schedule-grid">
+        <article class="day-card lift-day">
+          <span>Monday</span>
+          <h3>Squat Practice</h3>
+          <ul>
+            <li>Squat Practice</li>
+            <li>Bench</li>
+            <li>Rows</li>
+          </ul>
+        </article>
+        <article class="day-card cardio-day">
+          <span>Tuesday</span>
+          <h3>Cardio</h3>
+          <ul>
+            <li>StairMaster or Walking</li>
+          </ul>
+        </article>
+        <article class="day-card cardio-day">
+          <span>Thursday</span>
+          <h3>Cardio</h3>
+          <ul>
+            <li>StairMaster or Walking</li>
+          </ul>
+        </article>
+        <article class="day-card lift-day">
+          <span>Friday</span>
+          <h3>Deadlift Practice</h3>
+          <ul>
+            <li>Deadlift Practice</li>
+            <li>Overhead Press</li>
+            <li>Pulldowns</li>
+          </ul>
+        </article>
+        <article class="day-card optional-day">
+          <span>Saturday</span>
+          <h3>Optional Activity</h3>
+          <ul>
+            <li>Walk, mobility, light hike, or easy sport</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split" aria-labelledby="technique-title">
+      <div class="section-heading">
+        <p class="kicker">Technique Phase</p>
+        <h2 id="technique-title">The bar only gets heavier after the reps prove it.</h2>
+      </div>
+      <div class="phase-grid">
+        <article class="phase-card">
+          <div class="phase-top">
+            <span class="lift-label">Squat</span>
+            <strong>100 lbs</strong>
+          </div>
+          <p>3 sets x 5 reps</p>
+        </article>
+        <article class="phase-card">
+          <div class="phase-top">
+            <span class="lift-label">Deadlift</span>
+            <strong>135 lbs</strong>
+          </div>
+          <p>3 sets x 5 reps</p>
+        </article>
+        <article class="rule-card">
+          <span>Rule</span>
+          <p>Do not increase weight until three perfect workouts have been completed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="checklists-title">
+      <div class="section-heading">
+        <p class="kicker">Perfect Rep Checklists</p>
+        <h2 id="checklists-title">Quality standards before progression.</h2>
+      </div>
+      <div class="checklist-grid">
+        <article class="checklist-card">
+          <h3>Squat Checklist</h3>
+          <label><input type="checkbox" data-check="squat-brace"> Brace before descent</label>
+          <label><input type="checkbox" data-check="squat-feet"> Feet rooted and pressure balanced</label>
+          <label><input type="checkbox" data-check="squat-knees"> Knees track with toes</label>
+          <label><input type="checkbox" data-check="squat-depth"> Controlled depth with no bounce</label>
+          <label><input type="checkbox" data-check="squat-ascent"> Hips and chest rise together</label>
+          <label><input type="checkbox" data-check="squat-speed"> Same bar path on every rep</label>
+        </article>
+        <article class="checklist-card">
+          <h3>Deadlift Checklist</h3>
+          <label><input type="checkbox" data-check="deadlift-setup"> Bar over midfoot</label>
+          <label><input type="checkbox" data-check="deadlift-lats"> Lats tight before pull</label>
+          <label><input type="checkbox" data-check="deadlift-brace"> Brace and pull slack out</label>
+          <label><input type="checkbox" data-check="deadlift-back"> Neutral spine from floor to lockout</label>
+          <label><input type="checkbox" data-check="deadlift-lockout"> Smooth lockout without leaning back</label>
+          <label><input type="checkbox" data-check="deadlift-lower"> Controlled return to the floor</label>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="milestones-title">
+      <div class="section-heading">
+        <p class="kicker">Weight Loss Milestones</p>
+        <h2 id="milestones-title">Two-year path, measured monthly.</h2>
+      </div>
+      <div class="timeline">
+        <article>
+          <span>Month 3</span>
+          <strong>208-210 lbs</strong>
+          <p>Build tracking habit and hold technique standards.</p>
+        </article>
+        <article>
+          <span>Month 6</span>
+          <strong>202-205 lbs</strong>
+          <p>Approach Goal 1 while keeping lifts crisp.</p>
+        </article>
+        <article>
+          <span>Month 12</span>
+          <strong>195-200 lbs</strong>
+          <p>Settle near Goal 1 and aim toward Goal 2.</p>
+        </article>
+        <article>
+          <span>Month 18</span>
+          <strong>188-193 lbs</strong>
+          <p>Maintain strength practice while tightening body fat.</p>
+        </article>
+        <article>
+          <span>Month 24</span>
+          <strong>180-185 lbs</strong>
+          <p>Reach stretch range only if recovery and lean mass hold.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section tracker-section" id="tracker" aria-labelledby="tracker-title">
+      <div class="section-heading">
+        <p class="kicker">Progress Tracker</p>
+        <h2 id="tracker-title">Log the month. Keep the trend honest.</h2>
+      </div>
+      <div class="tracker-layout">
+        <form class="tracker-form" id="progress-form">
+          <label>
+            Month
+            <input id="entry-month" name="month" type="month" required>
+          </label>
+          <label>
+            Weight
+            <input id="entry-weight" name="weight" type="number" min="100" max="350" step="0.1" placeholder="213.6" required>
+          </label>
+          <label>
+            Body Fat
+            <input id="entry-body-fat" name="bodyFat" type="number" min="5" max="60" step="0.1" placeholder="29.1" required>
+          </label>
+          <label>
+            Waist
+            <input id="entry-waist" name="waist" type="number" min="20" max="70" step="0.1" placeholder="inches">
+          </label>
+          <label>
+            Squat
+            <input id="entry-squat" name="squat" type="number" min="0" max="700" step="5" placeholder="100">
+          </label>
+          <label>
+            Deadlift
+            <input id="entry-deadlift" name="deadlift" type="number" min="0" max="900" step="5" placeholder="135">
+          </label>
+          <label class="wide">
+            Notes
+            <textarea id="entry-notes" name="notes" rows="4" placeholder="Technique notes, energy, recovery, wins, misses"></textarea>
+          </label>
+          <div class="form-actions">
+            <button type="submit">Save Entry</button>
+            <button type="button" class="secondary" id="clear-form">Clear Form</button>
+            <button type="button" class="danger" id="reset-data">Reset Data</button>
+          </div>
+        </form>
+
+        <aside class="tracker-summary" aria-label="Current progress summary">
+          <div>
+            <span>Latest Weight</span>
+            <strong id="latest-weight">213.6 lbs</strong>
+          </div>
+          <div>
+            <span>Lost From Start</span>
+            <strong id="lost-weight">0.0 lbs</strong>
+          </div>
+          <div>
+            <span>Latest Body Fat</span>
+            <strong id="latest-body-fat">29.1%</strong>
+          </div>
+          <div>
+            <span>Logged Months</span>
+            <strong id="logged-months">0</strong>
+          </div>
+          <div>
+            <span>Workout Count</span>
+            <strong id="workout-count">0</strong>
+          </div>
+          <button type="button" id="add-workout">Add Workout</button>
+        </aside>
+      </div>
+
+      <div class="entries-wrap">
+        <h3>Saved Entries</h3>
+        <div class="entries-table" role="region" aria-label="Saved progress entries" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Weight</th>
+                <th>Body Fat</th>
+                <th>Waist</th>
+                <th>Squat</th>
+                <th>Deadlift</th>
+                <th>Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="entries-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section chart-section" id="chart" aria-labelledby="chart-title">
+      <div class="section-heading">
+        <p class="kicker">Monthly Progress Chart</p>
+        <h2 id="chart-title">Trend lines beat daily noise.</h2>
+      </div>
+      <div class="chart-shell">
+        <canvas id="progress-chart" height="360" aria-label="Monthly progress chart" role="img"></canvas>
+        <p id="chart-status" class="chart-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section" id="badges" aria-labelledby="badges-title">
+      <div class="section-heading">
+        <p class="kicker">Achievement Badges</p>
+        <h2 id="badges-title">Earned by evidence.</h2>
+      </div>
+      <div class="badge-grid" id="badge-grid">
+        <article class="badge" data-badge="first-five">
+          <span>5</span>
+          <h3>First 5 Pounds Lost</h3>
+          <p>Reach 208.6 lbs or lower.</p>
+        </article>
+        <article class="badge" data-badge="workouts-100">
+          <span>100</span>
+          <h3>100 Workouts</h3>
+          <p>Log one hundred completed workouts.</p>
+        </article>
+        <article class="badge" data-badge="workouts-200">
+          <span>200</span>
+          <h3>200 Workouts</h3>
+          <p>Log two hundred completed workouts.</p>
+        </article>
+        <article class="badge" data-badge="bf-25">
+          <span>25</span>
+          <h3>Body Fat Under 25%</h3>
+          <p>Record body fat below 25%.</p>
+        </article>
+        <article class="badge" data-badge="bf-20">
+          <span>20</span>
+          <h3>Body Fat Under 20%</h3>
+          <p>Record body fat below 20%.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>PROJECT 50 - EGO LESS STRENGTH</p>
+    <a href="#top">Back to top</a>
+  </footer>
+</body>
+</html>
