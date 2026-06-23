@@ -1,4 +1,4 @@
-# PROJECT 50 - EGO LESS STRENGTH
+# S&P500web
 
 A free, static GitHub Pages fitness dashboard for long-term personal tracking.
 
@@ -62,7 +62,7 @@ The page attempts to load Chart.js from a CDN as requested. If the CDN is unavai
 1. Go to [https://github.com](https://github.com).
 2. Click the `+` button in the top-right corner.
 3. Click `New repository`.
-4. Enter a repository name, for example `project-50-ego-less-strength`.
+4. Enter a repository name, for example `SP500web`.
 5. Choose `Public`.
 6. Do not add a README, license, or `.gitignore` because these files already exist in this project.
 7. Click `Create repository`.
@@ -78,7 +78,7 @@ The page attempts to load Chart.js from a CDN as requested. If the CDN is unavai
    - `README.md`
    - `LICENSE`
    - `.gitignore`
-4. In the commit message box, type `Initial PROJECT 50 dashboard`.
+4. In the commit message box, type `Initial S&P500web dashboard`.
 5. Click `Commit changes`.
 
 ### 3. Push With Git Instead
@@ -88,9 +88,9 @@ If you prefer the command line, run these commands from the project folder:
 ```bash
 git init
 git add index.html style.css app.js README.md LICENSE .gitignore
-git commit -m "Initial PROJECT 50 dashboard"
+git commit -m "Initial S&P500web dashboard"
 git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/project-50-ego-less-strength.git
+git remote add origin https://github.com/YOUR-USERNAME/SP500web.git
 git push -u origin main
 ```
 
@@ -116,7 +116,7 @@ Replace `YOUR-USERNAME` with your GitHub username.
 The URL will usually look like this:
 
 ```text
-https://YOUR-USERNAME.github.io/project-50-ego-less-strength/
+https://YOUR-USERNAME.github.io/SP500web/
 ```
 
 GitHub Pages can take a few minutes to publish the first time.
