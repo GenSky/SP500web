@@ -23,3 +23,6 @@ temp/
 
 # Dependency folders, in case tooling is added later
 node_modules/
+# Local QA artifacts
+.playwright-cli/
+output/

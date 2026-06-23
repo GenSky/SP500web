@@ -3,533 +3,154 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="S&amp;P500web, a private long-term fitness tracking dashboard for strength practice, fat loss, and consistency.">
-  <title>S&amp;P500web</title>
+  <meta name="description" content="S&P500web tracks S&P 500 market data from a free daily data feed.">
+  <title>S&P500web</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
-  <header class="hero" id="top">
+  <header class="site-header" id="top">
     <nav class="topbar" aria-label="Primary navigation">
-      <a class="brand" href="#top" aria-label="S&amp;P500web home">
-        <span class="brand-mark">S&amp;P</span>
+      <a class="brand" href="#top" aria-label="S&P500web home">
+        <span class="brand-mark">S&P</span>
         <span>
-          <strong>S&amp;P500web</strong>
-          <small>EGO LESS STRENGTH</small>
+          <strong>S&P500web</strong>
+          <small>Market dashboard</small>
         </span>
       </a>
       <div class="nav-links">
-        <a href="#training">Training</a>
-        <a href="#gym-log">Gym Log</a>
-        <a href="#tracker">Tracker</a>
+        <a href="#overview">Overview</a>
         <a href="#chart">Chart</a>
-        <a href="#badges">Badges</a>
+        <a href="#watchlist">Watchlist</a>
+        <a href="#method">Data</a>
       </div>
     </nav>
 
-    <section class="hero-grid" aria-labelledby="hero-title">
+    <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="kicker">Two-year strength and health dashboard</p>
-        <h1 id="hero-title">EGO LESS STRENGTH</h1>
-        <p class="motto">"EARN THE RIGHT TO ADD 5 POUNDS"</p>
-        <p class="hero-text">Slow fat loss, durable technique, and repeatable training for a 48-year-old lifter building consistency one perfect rep at a time.</p>
+        <p class="eyebrow">S&P 500 market snapshot</p>
+        <h1 id="hero-title">Track the index, its ETF proxies, and major benchmark names.</h1>
+        <p class="hero-text">A static GitHub Pages dashboard backed by a free scheduled stock-data pull. No API key is exposed in the browser.</p>
+        <div class="hero-actions" aria-label="Market ranges">
+          <button class="range-button active" type="button" data-range="1m">1M</button>
+          <button class="range-button" type="button" data-range="3m">3M</button>
+          <button class="range-button" type="button" data-range="6m">6M</button>
+          <button class="range-button" type="button" data-range="1y">1Y</button>
+        </div>
       </div>
 
-      <div class="hero-panel" aria-label="Current targets">
-        <div class="meter">
-          <div class="meter-ring" style="--progress: 41deg">
-            <span>213.6</span>
-            <small>lbs now</small>
-          </div>
-        </div>
-        <div class="hero-stats">
+      <div class="quote-panel" aria-live="polite">
+        <p class="panel-label">S&P 500</p>
+        <div class="quote-price" id="index-price">Loading</div>
+        <div class="quote-change" id="index-change">Fetching latest snapshot</div>
+        <dl class="quote-meta">
           <div>
-            <span>Goal Weight</span>
-            <strong>200 -> 190</strong>
+            <dt>Updated</dt>
+            <dd id="updated-at">--</dd>
           </div>
           <div>
-            <span>Stretch Range</span>
-            <strong>180-185</strong>
+            <dt>Source</dt>
+            <dd id="data-source">--</dd>
           </div>
-          <div>
-            <span>Body Fat Target</span>
-            <strong>15-17%</strong>
-          </div>
-          <div>
-            <span>Lean Mass</span>
-            <strong>151.4 lbs</strong>
-          </div>
-        </div>
+        </dl>
       </div>
     </section>
   </header>
 
   <main>
-    <section class="section overview" aria-labelledby="overview-title">
+    <section class="section" id="overview" aria-labelledby="overview-title">
       <div class="section-heading">
-        <p class="kicker">S&amp;P500web Overview</p>
-        <h2 id="overview-title">Train like the goal is still two years away.</h2>
+        <p class="eyebrow">Overview</p>
+        <h2 id="overview-title">Benchmark health at a glance.</h2>
       </div>
-      <div class="overview-grid">
-        <article class="info-card">
-          <span class="card-icon green">01</span>
-          <h3>Lose Slowly</h3>
-          <p>Target steady progress without sacrificing lean mass, energy, or training quality.</p>
-        </article>
-        <article class="info-card">
-          <span class="card-icon blue">02</span>
-          <h3>Practice Strength</h3>
-          <p>Squat and deadlift are technique practices first. Load is earned only after clean execution.</p>
-        </article>
-        <article class="info-card">
-          <span class="card-icon yellow">03</span>
-          <h3>Protect Consistency</h3>
-          <p>Keep the plan repeatable, recoverable, and boring enough to survive busy weeks.</p>
-        </article>
-        <article class="info-card">
-          <span class="card-icon red">04</span>
-          <h3>Check Ego</h3>
-          <p>No rushed jumps. No sloppy reps. No weight increase without three perfect workouts.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section stats-band" aria-label="Current stats">
-      <div>
-        <span>Age</span>
-        <strong>48</strong>
-      </div>
-      <div>
-        <span>Weight</span>
-        <strong>213.6 lbs</strong>
-      </div>
-      <div>
-        <span>Body Fat</span>
-        <strong>29.1%</strong>
-      </div>
-      <div>
-        <span>Lean Mass</span>
-        <strong>151.4 lbs</strong>
-      </div>
-    </section>
-
-    <section class="section" id="training" aria-labelledby="training-title">
-      <div class="section-heading">
-        <p class="kicker">Weekly Training Schedule</p>
-        <h2 id="training-title">Simple weekly rhythm.</h2>
-      </div>
-      <div class="schedule-grid">
-        <article class="day-card lift-day">
-          <span>Monday</span>
-          <h3>Squat Practice</h3>
-          <ul>
-            <li>Squat Practice</li>
-            <li>Bench</li>
-            <li>Rows</li>
-          </ul>
-        </article>
-        <article class="day-card cardio-day">
-          <span>Tuesday</span>
-          <h3>Cardio</h3>
-          <ul>
-            <li>StairMaster or Walking</li>
-          </ul>
-        </article>
-        <article class="day-card cardio-day">
-          <span>Thursday</span>
-          <h3>Cardio</h3>
-          <ul>
-            <li>StairMaster or Walking</li>
-          </ul>
-        </article>
-        <article class="day-card lift-day">
-          <span>Friday</span>
-          <h3>Deadlift Practice</h3>
-          <ul>
-            <li>Deadlift Practice</li>
-            <li>Overhead Press</li>
-            <li>Pulldowns</li>
-          </ul>
-        </article>
-        <article class="day-card optional-day">
-          <span>Saturday</span>
-          <h3>Optional Activity</h3>
-          <ul>
-            <li>Walk, mobility, light hike, or easy sport</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-
-    <section class="section gym-log-section" id="gym-log" aria-labelledby="gym-log-title">
-      <div class="section-heading">
-        <p class="kicker">Gym Log</p>
-        <h2 id="gym-log-title">Track every gym day: done, missed, and what actually happened.</h2>
-      </div>
-
-      <div class="week-tracker" id="week-tracker" aria-label="This week training tracker"></div>
-
-      <div class="gym-log-layout">
-        <form class="gym-log-form" id="gym-log-form">
-          <label>
-            Date
-            <input id="log-date" name="date" type="date" required>
-          </label>
-          <label>
-            Training Day
-            <select id="log-day" name="day" required>
-              <option value="Monday">Monday - Squat Practice</option>
-              <option value="Tuesday">Tuesday - StairMaster or Walking</option>
-              <option value="Thursday">Thursday - StairMaster or Walking</option>
-              <option value="Friday">Friday - Deadlift Practice</option>
-              <option value="Saturday">Saturday - Optional Activity</option>
-            </select>
-          </label>
-          <label>
-            Status
-            <select id="log-status" name="status" required>
-              <option value="done">Done</option>
-              <option value="missed">Missed</option>
-            </select>
-          </label>
-
-          <fieldset class="workout-checks">
-            <legend>Workout Checklist</legend>
-            <div id="workout-checklist"></div>
-          </fieldset>
-
-          <div class="lift-input-grid">
-            <label>
-              Squat Weight
-              <input id="log-squat" name="squat" type="number" min="0" max="700" step="5" placeholder="100">
-            </label>
-            <label>
-              Bench Weight
-              <input id="log-bench" name="bench" type="number" min="0" max="700" step="5" placeholder="lbs">
-            </label>
-            <label>
-              Row Weight
-              <input id="log-row" name="row" type="number" min="0" max="700" step="5" placeholder="lbs">
-            </label>
-            <label>
-              Deadlift Weight
-              <input id="log-deadlift" name="deadlift" type="number" min="0" max="900" step="5" placeholder="135">
-            </label>
-            <label>
-              Overhead Press
-              <input id="log-press" name="press" type="number" min="0" max="500" step="5" placeholder="lbs">
-            </label>
-            <label>
-              Pulldown Weight
-              <input id="log-pulldown" name="pulldown" type="number" min="0" max="500" step="5" placeholder="lbs">
-            </label>
-          </div>
-
-          <div class="cardio-input-grid">
-            <label>
-              Cardio Type
-              <select id="log-cardio-type" name="cardioType">
-                <option value="">None</option>
-                <option value="StairMaster">StairMaster</option>
-                <option value="Walking">Walking</option>
-                <option value="Bike">Bike</option>
-                <option value="Elliptical">Elliptical</option>
-                <option value="Other">Other</option>
-              </select>
-            </label>
-            <label>
-              Cardio Time
-              <input id="log-cardio-minutes" name="cardioMinutes" type="number" min="0" max="240" step="1" placeholder="minutes">
-            </label>
-            <label>
-              Level
-              <input id="log-cardio-level" name="cardioLevel" type="number" min="0" max="25" step="0.5" placeholder="level">
-            </label>
-            <label>
-              Speed
-              <input id="log-cardio-speed" name="cardioSpeed" type="number" min="0" max="15" step="0.1" placeholder="mph">
-            </label>
-          </div>
-
-          <label class="wide">
-            Session Notes
-            <textarea id="log-notes" name="notes" rows="4" placeholder="Perfect reps, missed work, pain, energy, cardio details"></textarea>
-          </label>
-
-          <div class="form-actions">
-            <button type="submit">Save Gym Log</button>
-            <button type="button" class="secondary" id="clear-log-form">Clear Log</button>
-          </div>
-        </form>
-
-        <aside class="gym-log-summary" aria-label="Gym log summary">
-          <div>
-            <span>Completed Sessions</span>
-            <strong id="completed-sessions">0</strong>
-          </div>
-          <div>
-            <span>Missed Sessions</span>
-            <strong id="missed-sessions">0</strong>
-          </div>
-          <div>
-            <span>This Week Done</span>
-            <strong id="week-done">0</strong>
-          </div>
-          <div>
-            <span>This Week Missed</span>
-            <strong id="week-missed">0</strong>
-          </div>
-        </aside>
-      </div>
-
-      <div class="entries-wrap">
-        <h3>Recent Gym Logs</h3>
-        <div class="entries-table" role="region" aria-label="Saved gym logs" tabindex="0">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Day</th>
-                <th>Status</th>
-                <th>Checklist</th>
-                <th>Weights</th>
-                <th>Cardio</th>
-                <th>Notes</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="gym-log-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <section class="section split" aria-labelledby="technique-title">
-      <div class="section-heading">
-        <p class="kicker">Technique Phase</p>
-        <h2 id="technique-title">The bar only gets heavier after the reps prove it.</h2>
-      </div>
-      <div class="phase-grid">
-        <article class="phase-card">
-          <div class="phase-top">
-            <span class="lift-label">Squat</span>
-            <strong>100 lbs</strong>
-          </div>
-          <p>3 sets x 5 reps</p>
-        </article>
-        <article class="phase-card">
-          <div class="phase-top">
-            <span class="lift-label">Deadlift</span>
-            <strong>135 lbs</strong>
-          </div>
-          <p>3 sets x 5 reps</p>
-        </article>
-        <article class="rule-card">
-          <span>Rule</span>
-          <p>Do not increase weight until three perfect workouts have been completed.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="checklists-title">
-      <div class="section-heading">
-        <p class="kicker">Perfect Rep Checklists</p>
-        <h2 id="checklists-title">Quality standards before progression.</h2>
-      </div>
-      <div class="checklist-grid">
-        <article class="checklist-card">
-          <h3>Squat Checklist</h3>
-          <label><input type="checkbox" data-check="squat-brace"> Brace before descent</label>
-          <label><input type="checkbox" data-check="squat-feet"> Feet rooted and pressure balanced</label>
-          <label><input type="checkbox" data-check="squat-knees"> Knees track with toes</label>
-          <label><input type="checkbox" data-check="squat-depth"> Controlled depth with no bounce</label>
-          <label><input type="checkbox" data-check="squat-ascent"> Hips and chest rise together</label>
-          <label><input type="checkbox" data-check="squat-speed"> Same bar path on every rep</label>
-        </article>
-        <article class="checklist-card">
-          <h3>Deadlift Checklist</h3>
-          <label><input type="checkbox" data-check="deadlift-setup"> Bar over midfoot</label>
-          <label><input type="checkbox" data-check="deadlift-lats"> Lats tight before pull</label>
-          <label><input type="checkbox" data-check="deadlift-brace"> Brace and pull slack out</label>
-          <label><input type="checkbox" data-check="deadlift-back"> Neutral spine from floor to lockout</label>
-          <label><input type="checkbox" data-check="deadlift-lockout"> Smooth lockout without leaning back</label>
-          <label><input type="checkbox" data-check="deadlift-lower"> Controlled return to the floor</label>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="milestones-title">
-      <div class="section-heading">
-        <p class="kicker">Weight Loss Milestones</p>
-        <h2 id="milestones-title">Two-year path, measured monthly.</h2>
-      </div>
-      <div class="timeline">
-        <article>
-          <span>Month 3</span>
-          <strong>208-210 lbs</strong>
-          <p>Build tracking habit and hold technique standards.</p>
-        </article>
-        <article>
-          <span>Month 6</span>
-          <strong>202-205 lbs</strong>
-          <p>Approach Goal 1 while keeping lifts crisp.</p>
-        </article>
-        <article>
-          <span>Month 12</span>
-          <strong>195-200 lbs</strong>
-          <p>Settle near Goal 1 and aim toward Goal 2.</p>
-        </article>
-        <article>
-          <span>Month 18</span>
-          <strong>188-193 lbs</strong>
-          <p>Maintain strength practice while tightening body fat.</p>
-        </article>
-        <article>
-          <span>Month 24</span>
-          <strong>180-185 lbs</strong>
-          <p>Reach stretch range only if recovery and lean mass hold.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section tracker-section" id="tracker" aria-labelledby="tracker-title">
-      <div class="section-heading">
-        <p class="kicker">Progress Tracker</p>
-        <h2 id="tracker-title">Log the month. Keep the trend honest.</h2>
-      </div>
-      <div class="tracker-layout">
-        <form class="tracker-form" id="progress-form">
-          <label>
-            Month
-            <input id="entry-month" name="month" type="month" required>
-          </label>
-          <label>
-            Weight
-            <input id="entry-weight" name="weight" type="number" min="100" max="350" step="0.1" placeholder="213.6" required>
-          </label>
-          <label>
-            Body Fat
-            <input id="entry-body-fat" name="bodyFat" type="number" min="5" max="60" step="0.1" placeholder="29.1" required>
-          </label>
-          <label>
-            Waist
-            <input id="entry-waist" name="waist" type="number" min="20" max="70" step="0.1" placeholder="inches">
-          </label>
-          <label>
-            Squat
-            <input id="entry-squat" name="squat" type="number" min="0" max="700" step="5" placeholder="100">
-          </label>
-          <label>
-            Deadlift
-            <input id="entry-deadlift" name="deadlift" type="number" min="0" max="900" step="5" placeholder="135">
-          </label>
-          <label class="wide">
-            Notes
-            <textarea id="entry-notes" name="notes" rows="4" placeholder="Technique notes, energy, recovery, wins, misses"></textarea>
-          </label>
-          <div class="form-actions">
-            <button type="submit">Save Entry</button>
-            <button type="button" class="secondary" id="clear-form">Clear Form</button>
-            <button type="button" class="danger" id="reset-data">Reset Data</button>
-          </div>
-        </form>
-
-        <aside class="tracker-summary" aria-label="Current progress summary">
-          <div>
-            <span>Latest Weight</span>
-            <strong id="latest-weight">213.6 lbs</strong>
-          </div>
-          <div>
-            <span>Lost From Start</span>
-            <strong id="lost-weight">0.0 lbs</strong>
-          </div>
-          <div>
-            <span>Latest Body Fat</span>
-            <strong id="latest-body-fat">29.1%</strong>
-          </div>
-          <div>
-            <span>Logged Months</span>
-            <strong id="logged-months">0</strong>
-          </div>
-          <div>
-            <span>Workout Count</span>
-            <strong id="workout-count">0</strong>
-          </div>
-          <button type="button" id="add-workout">Add Workout</button>
-        </aside>
-      </div>
-
-      <div class="entries-wrap">
-        <h3>Saved Entries</h3>
-        <div class="entries-table" role="region" aria-label="Saved progress entries" tabindex="0">
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th>Weight</th>
-                <th>Body Fat</th>
-                <th>Waist</th>
-                <th>Squat</th>
-                <th>Deadlift</th>
-                <th>Notes</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="entries-body"></tbody>
-          </table>
-        </div>
-      </div>
+      <div class="metric-grid" id="metric-grid"></div>
     </section>
 
     <section class="section chart-section" id="chart" aria-labelledby="chart-title">
-      <div class="section-heading">
-        <p class="kicker">Monthly Progress Chart</p>
-        <h2 id="chart-title">Trend lines beat daily noise.</h2>
+      <div class="section-heading inline-heading">
+        <div>
+          <p class="eyebrow">Index history</p>
+          <h2 id="chart-title">S&P 500 closing price trend.</h2>
+        </div>
+        <p class="chart-caption" id="chart-caption">--</p>
       </div>
-      <div class="chart-shell">
-        <canvas id="progress-chart" height="360" aria-label="Monthly progress chart" role="img"></canvas>
-        <p id="chart-status" class="chart-status" aria-live="polite"></p>
+      <div class="chart-wrap">
+        <canvas id="price-chart" width="1200" height="520" aria-label="S&P 500 price chart" role="img"></canvas>
       </div>
     </section>
 
-    <section class="section" id="badges" aria-labelledby="badges-title">
-      <div class="section-heading">
-        <p class="kicker">Achievement Badges</p>
-        <h2 id="badges-title">Earned by evidence.</h2>
+    <section class="section split-section" aria-labelledby="movers-title">
+      <div>
+        <div class="section-heading compact-heading">
+          <p class="eyebrow">Movers</p>
+          <h2 id="movers-title">Largest moves in the tracked list.</h2>
+        </div>
+        <div class="mover-list" id="mover-list"></div>
       </div>
-      <div class="badge-grid" id="badge-grid">
-        <article class="badge" data-badge="first-five">
-          <span>5</span>
-          <h3>First 5 Pounds Lost</h3>
-          <p>Reach 208.6 lbs or lower.</p>
+      <div class="range-card">
+        <p class="eyebrow">52-week position</p>
+        <h2 id="range-title">Where the index sits in its yearly range.</h2>
+        <div class="range-track" aria-hidden="true">
+          <span id="range-fill"></span>
+        </div>
+        <div class="range-labels">
+          <span id="range-low">--</span>
+          <strong id="range-current">--</strong>
+          <span id="range-high">--</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="watchlist" aria-labelledby="watchlist-title">
+      <div class="section-heading inline-heading">
+        <div>
+          <p class="eyebrow">Watchlist</p>
+          <h2 id="watchlist-title">Index, ETFs, and large benchmark holdings.</h2>
+        </div>
+        <span class="status-pill" id="status-pill">Loading data</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Name</th>
+              <th>Last</th>
+              <th>Day</th>
+              <th>YTD</th>
+              <th>52W Range</th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section method-section" id="method" aria-labelledby="method-title">
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">Data pipeline</p>
+        <h2 id="method-title">Free data, committed as static JSON.</h2>
+      </div>
+      <div class="method-grid">
+        <article>
+          <h3>Fetcher</h3>
+          <p><code>scripts/update_market_data.py</code> pulls daily chart data and writes <code>data/market.json</code>.</p>
         </article>
-        <article class="badge" data-badge="workouts-100">
-          <span>100</span>
-          <h3>100 Workouts</h3>
-          <p>Log one hundred completed workouts.</p>
+        <article>
+          <h3>Automation</h3>
+          <p>GitHub Actions runs the updater on a schedule and commits the refreshed snapshot when data changes.</p>
         </article>
-        <article class="badge" data-badge="workouts-200">
-          <span>200</span>
-          <h3>200 Workouts</h3>
-          <p>Log two hundred completed workouts.</p>
-        </article>
-        <article class="badge" data-badge="bf-25">
-          <span>25</span>
-          <h3>Body Fat Under 25%</h3>
-          <p>Record body fat below 25%.</p>
-        </article>
-        <article class="badge" data-badge="bf-20">
-          <span>20</span>
-          <h3>Body Fat Under 20%</h3>
-          <p>Record body fat below 20%.</p>
+        <article>
+          <h3>Website</h3>
+          <p>The browser fetches only the local JSON file, so no market-data API key is shipped to visitors.</p>
         </article>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <p>S&amp;P500web</p>
+    <p>S&P500web uses free delayed market data for informational display only.</p>
     <a href="#top">Back to top</a>
   </footer>
 </body>
