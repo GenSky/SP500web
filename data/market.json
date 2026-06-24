@@ -1,19 +1,14 @@
 {
   "failures": [],
-  "generatedAt": "2026-06-23T23:35:05+00:00",
+  "generatedAt": "2026-06-24T23:41:23+00:00",
   "index": {
-    "change": -107.33,
-    "changePercent": -1.4363,
+    "change": -7.2398,
+    "changePercent": -0.0983,
     "currency": "USD",
     "exchange": "SNP",
     "fiftyTwoWeekHigh": 7609.7798,
     "fiftyTwoWeekLow": 6092.1602,
     "history": [
-      {
-        "close": 6092.1802,
-        "date": "2025-06-24",
-        "volume": 5443690000
-      },
       {
         "close": 6092.1602,
         "date": "2025-06-25",
@@ -1262,34 +1257,34 @@
       {
         "close": 7365.46,
         "date": "2026-06-23",
-        "volume": 3658965000
+        "volume": 5640530000
+      },
+      {
+        "close": 7358.2202,
+        "date": "2026-06-24",
+        "volume": 3600977000
       }
     ],
-    "last": 7365.46,
+    "last": 7358.2202,
     "name": "S&P 500 Index",
-    "oneMonthPercent": -0.9083,
-    "previousClose": 7472.79,
+    "oneMonthPercent": -1.1752,
+    "previousClose": 7365.46,
     "symbol": "^GSPC",
     "type": "Index",
-    "ytdPercent": 7.3922
+    "ytdPercent": 7.2866
   },
   "notes": "Free delayed market data. Values are for informational website display only.",
   "sourceName": "Yahoo Finance chart endpoint",
   "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart",
   "symbols": [
     {
-      "change": -107.33,
-      "changePercent": -1.4363,
+      "change": -7.2398,
+      "changePercent": -0.0983,
       "currency": "USD",
       "exchange": "SNP",
       "fiftyTwoWeekHigh": 7609.7798,
       "fiftyTwoWeekLow": 6092.1602,
       "history": [
-        {
-          "close": 6092.1802,
-          "date": "2025-06-24",
-          "volume": 5443690000
-        },
         {
           "close": 6092.1602,
           "date": "2025-06-25",
@@ -2538,30 +2533,30 @@
         {
           "close": 7365.46,
           "date": "2026-06-23",
-          "volume": 3658965000
+          "volume": 5640530000
+        },
+        {
+          "close": 7358.2202,
+          "date": "2026-06-24",
+          "volume": 3600977000
         }
       ],
-      "last": 7365.46,
+      "last": 7358.2202,
       "name": "S&P 500 Index",
-      "oneMonthPercent": -0.9083,
-      "previousClose": 7472.79,
+      "oneMonthPercent": -1.1752,
+      "previousClose": 7365.46,
       "symbol": "^GSPC",
       "type": "Index",
-      "ytdPercent": 7.3922
+      "ytdPercent": 7.2866
     },
     {
-      "change": -10.81,
-      "changePercent": -1.4522,
+      "change": -0.34,
+      "changePercent": -0.0463,
       "currency": "USD",
       "exchange": "NYSEArca",
       "fiftyTwoWeekHigh": 759.57,
-      "fiftyTwoWeekLow": 606.78,
+      "fiftyTwoWeekLow": 607.12,
       "history": [
-        {
-          "close": 606.78,
-          "date": "2025-06-24",
-          "volume": 67735300
-        },
         {
           "close": 607.12,
           "date": "2025-06-25",
@@ -3810,30 +3805,30 @@
         {
           "close": 733.58,
           "date": "2026-06-23",
-          "volume": 65210826
+          "volume": 66846800
+        },
+        {
+          "close": 733.24,
+          "date": "2026-06-24",
+          "volume": 45349023
         }
       ],
-      "last": 733.58,
+      "last": 733.24,
       "name": "SPDR S&P 500 ETF Trust",
-      "oneMonthPercent": -1.0347,
-      "previousClose": 744.39,
+      "oneMonthPercent": -1.2764,
+      "previousClose": 733.58,
       "symbol": "SPY",
       "type": "ETF",
-      "ytdPercent": 7.3788
+      "ytdPercent": 7.3291
     },
     {
-      "change": -9.76,
-      "changePercent": -1.4225,
+      "change": -0.65,
+      "changePercent": -0.0961,
       "currency": "USD",
       "exchange": "NYSEArca",
       "fiftyTwoWeekHigh": 698.26,
-      "fiftyTwoWeekLow": 559.44,
+      "fiftyTwoWeekLow": 559.72,
       "history": [
-        {
-          "close": 559.44,
-          "date": "2025-06-24",
-          "volume": 6770000
-        },
         {
           "close": 559.72,
           "date": "2025-06-25",
@@ -5082,30 +5077,30 @@
         {
           "close": 676.34,
           "date": "2026-06-23",
-          "volume": 12790996
+          "volume": 17581700
+        },
+        {
+          "close": 675.69,
+          "date": "2026-06-24",
+          "volume": 9597359
         }
       ],
-      "last": 676.34,
+      "last": 675.69,
       "name": "Vanguard S&P 500 ETF",
-      "oneMonthPercent": -0.7673,
-      "previousClose": 686.1,
+      "oneMonthPercent": -1.0471,
+      "previousClose": 676.34,
       "symbol": "VOO",
       "type": "ETF",
-      "ytdPercent": 7.646
+      "ytdPercent": 7.5426
     },
     {
-      "change": -10.64,
-      "changePercent": -1.4229,
+      "change": -0.48,
+      "changePercent": -0.0651,
       "currency": "USD",
       "exchange": "NYSEArca",
       "fiftyTwoWeekHigh": 763.06,
-      "fiftyTwoWeekLow": 609.51,
+      "fiftyTwoWeekLow": 609.96,
       "history": [
-        {
-          "close": 609.51,
-          "date": "2025-06-24",
-          "volume": 7360000
-        },
         {
           "close": 609.96,
           "date": "2025-06-25",
@@ -6354,30 +6349,30 @@
         {
           "close": 737.14,
           "date": "2026-06-23",
-          "volume": 3983116
+          "volume": 15553500
+        },
+        {
+          "close": 736.66,
+          "date": "2026-06-24",
+          "volume": 8688289
         }
       ],
-      "last": 737.14,
+      "last": 736.66,
       "name": "iShares Core S&P 500 ETF",
-      "oneMonthPercent": -1.0271,
-      "previousClose": 747.78,
+      "oneMonthPercent": -1.2758,
+      "previousClose": 737.14,
       "symbol": "IVV",
       "type": "ETF",
-      "ytdPercent": 7.4251
+      "ytdPercent": 7.3551
     },
     {
-      "change": -0.72,
-      "changePercent": -0.3435,
+      "change": 1.49,
+      "changePercent": 0.7133,
       "currency": "USD",
       "exchange": "NYSEArca",
       "fiftyTwoWeekHigh": 212.88,
       "fiftyTwoWeekLow": 178.88,
       "history": [
-        {
-          "close": 180.18,
-          "date": "2025-06-24",
-          "volume": 10283300
-        },
         {
           "close": 178.88,
           "date": "2025-06-25",
@@ -7626,30 +7621,30 @@
         {
           "close": 208.89,
           "date": "2026-06-23",
-          "volume": 10869816
+          "volume": 10942600
+        },
+        {
+          "close": 210.38,
+          "date": "2026-06-24",
+          "volume": 8180014
         }
       ],
-      "last": 208.89,
+      "last": 210.38,
       "name": "Invesco S&P 500 Equal Weight ETF",
-      "oneMonthPercent": 2.4825,
-      "previousClose": 209.61,
+      "oneMonthPercent": 2.7698,
+      "previousClose": 208.89,
       "symbol": "RSP",
       "type": "ETF",
-      "ytdPercent": 8.3117
+      "ytdPercent": 9.0843
     },
     {
-      "change": -2.71,
-      "changePercent": -0.9124,
+      "change": -1.22,
+      "changePercent": -0.4145,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 315.2,
-      "fiftyTwoWeekLow": 200.3,
+      "fiftyTwoWeekLow": 201.0,
       "history": [
-        {
-          "close": 200.3,
-          "date": "2025-06-24",
-          "volume": 54064000
-        },
         {
           "close": 201.56,
           "date": "2025-06-25",
@@ -8898,30 +8893,30 @@
         {
           "close": 294.3,
           "date": "2026-06-23",
-          "volume": 51882421
+          "volume": 52010900
+        },
+        {
+          "close": 293.08,
+          "date": "2026-06-24",
+          "volume": 46572137
         }
       ],
-      "last": 294.3,
+      "last": 293.08,
       "name": "Apple",
-      "oneMonthPercent": -2.6303,
-      "previousClose": 297.01,
+      "oneMonthPercent": -3.905,
+      "previousClose": 294.3,
       "symbol": "AAPL",
       "type": "Large holding",
-      "ytdPercent": 8.5938
+      "ytdPercent": 8.1436
     },
     {
-      "change": 6.6,
-      "changePercent": 1.7967,
+      "change": -8.48,
+      "changePercent": -2.2677,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 542.07,
       "fiftyTwoWeekLow": 356.77,
       "history": [
-        {
-          "close": 490.11,
-          "date": "2025-06-24",
-          "volume": 22305600
-        },
         {
           "close": 492.27,
           "date": "2025-06-25",
@@ -10170,30 +10165,30 @@
         {
           "close": 373.94,
           "date": "2026-06-23",
-          "volume": 39415431
+          "volume": 40647600
+        },
+        {
+          "close": 365.46,
+          "date": "2026-06-24",
+          "volume": 38527409
         }
       ],
-      "last": 373.94,
+      "last": 365.46,
       "name": "Microsoft",
-      "oneMonthPercent": -11.1908,
-      "previousClose": 367.34,
+      "oneMonthPercent": -12.7968,
+      "previousClose": 373.94,
       "symbol": "MSFT",
       "type": "Large holding",
-      "ytdPercent": -20.9329
+      "ytdPercent": -22.7259
     },
     {
-      "change": -8.61,
-      "changePercent": -4.1265,
+      "change": -1.04,
+      "changePercent": -0.5199,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 235.74,
-      "fiftyTwoWeekLow": 147.9,
+      "fiftyTwoWeekLow": 153.3,
       "history": [
-        {
-          "close": 147.9,
-          "date": "2025-06-24",
-          "volume": 187566100
-        },
         {
           "close": 154.31,
           "date": "2025-06-25",
@@ -11442,30 +11437,30 @@
         {
           "close": 200.04,
           "date": "2026-06-23",
-          "volume": 152123958
+          "volume": 153496200
+        },
+        {
+          "close": 199.0,
+          "date": "2026-06-24",
+          "volume": 149005898
         }
       ],
-      "last": 200.04,
+      "last": 199.0,
       "name": "NVIDIA",
-      "oneMonthPercent": -10.4846,
-      "previousClose": 208.65,
+      "oneMonthPercent": -9.3435,
+      "previousClose": 200.04,
       "symbol": "NVDA",
       "type": "Large holding",
-      "ytdPercent": 5.9253
+      "ytdPercent": 5.3746
     },
     {
-      "change": 1.32,
-      "changePercent": 0.567,
+      "change": 0.16,
+      "changePercent": 0.0683,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 274.99,
       "fiftyTwoWeekLow": 198.79,
       "history": [
-        {
-          "close": 212.77,
-          "date": "2025-06-24",
-          "volume": 38378800
-        },
         {
           "close": 211.99,
           "date": "2025-06-25",
@@ -12714,30 +12709,30 @@
         {
           "close": 234.11,
           "date": "2026-06-23",
-          "volume": 56989747
+          "volume": 60492600
+        },
+        {
+          "close": 234.27,
+          "date": "2026-06-24",
+          "volume": 62415490
         }
       ],
-      "last": 234.11,
+      "last": 234.27,
       "name": "Amazon",
-      "oneMonthPercent": -11.6599,
-      "previousClose": 232.79,
+      "oneMonthPercent": -12.7356,
+      "previousClose": 234.11,
       "symbol": "AMZN",
       "type": "Large holding",
-      "ytdPercent": 3.3598
+      "ytdPercent": 3.4305
     },
     {
-      "change": -3.55,
-      "changePercent": -1.0152,
+      "change": -0.84,
+      "changePercent": -0.2427,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 402.62,
-      "fiftyTwoWeekLow": 166.77,
+      "fiftyTwoWeekLow": 170.68,
       "history": [
-        {
-          "close": 166.77,
-          "date": "2025-06-24",
-          "volume": 40524300
-        },
         {
           "close": 170.68,
           "date": "2025-06-25",
@@ -13986,30 +13981,30 @@
         {
           "close": 346.13,
           "date": "2026-06-23",
-          "volume": 30469525
+          "volume": 34007700
+        },
+        {
+          "close": 345.29,
+          "date": "2026-06-24",
+          "volume": 41938315
         }
       ],
-      "last": 346.13,
+      "last": 345.29,
       "name": "Alphabet Class A",
-      "oneMonthPercent": -11.0,
-      "previousClose": 349.68,
+      "oneMonthPercent": -10.9297,
+      "previousClose": 346.13,
       "symbol": "GOOGL",
       "type": "Large holding",
-      "ytdPercent": 9.8302
+      "ytdPercent": 9.5637
     },
     {
-      "change": -1.65,
-      "changePercent": -0.2926,
+      "change": -4.53,
+      "changePercent": -0.8058,
       "currency": "USD",
       "exchange": "NasdaqGS",
       "fiftyTwoWeekHigh": 790.0,
       "fiftyTwoWeekLow": 525.72,
       "history": [
-        {
-          "close": 712.2,
-          "date": "2025-06-24",
-          "volume": 13823200
-        },
         {
           "close": 708.68,
           "date": "2025-06-25",
@@ -15258,30 +15253,30 @@
         {
           "close": 562.2,
           "date": "2026-06-23",
-          "volume": 12388472
+          "volume": 13103300
+        },
+        {
+          "close": 557.67,
+          "date": "2026-06-24",
+          "volume": 13155272
         }
       ],
-      "last": 562.2,
+      "last": 557.67,
       "name": "Meta Platforms",
-      "oneMonthPercent": -7.0836,
-      "previousClose": 563.85,
+      "oneMonthPercent": -8.1843,
+      "previousClose": 562.2,
       "symbol": "META",
       "type": "Large holding",
-      "ytdPercent": -13.5622
+      "ytdPercent": -14.2587
     },
     {
-      "change": 4.12,
-      "changePercent": 0.8431,
+      "change": 2.0,
+      "changePercent": 0.4058,
       "currency": "USD",
       "exchange": "NYSE",
       "fiftyTwoWeekHigh": 513.81,
       "fiftyTwoWeekLow": 459.11,
       "history": [
-        {
-          "close": 493.48,
-          "date": "2025-06-24",
-          "volume": 5111700
-        },
         {
           "close": 486.21,
           "date": "2025-06-25",
@@ -16530,30 +16525,30 @@
         {
           "close": 492.81,
           "date": "2026-06-23",
-          "volume": 4183569
+          "volume": 4428100
+        },
+        {
+          "close": 494.81,
+          "date": "2026-06-24",
+          "volume": 4657824
         }
       ],
-      "last": 492.81,
+      "last": 494.81,
       "name": "Berkshire Hathaway Class B",
-      "oneMonthPercent": 2.4766,
-      "previousClose": 488.69,
+      "oneMonthPercent": 3.0897,
+      "previousClose": 492.81,
       "symbol": "BRK-B",
       "type": "Large holding",
-      "ytdPercent": -0.8131
+      "ytdPercent": -0.4106
     },
     {
-      "change": 2.66,
-      "changePercent": 0.8025,
+      "change": -0.69,
+      "changePercent": -0.2065,
       "currency": "USD",
       "exchange": "NYSE",
       "fiftyTwoWeekHigh": 334.61,
-      "fiftyTwoWeekLow": 281.26,
+      "fiftyTwoWeekLow": 282.78,
       "history": [
-        {
-          "close": 281.26,
-          "date": "2025-06-24",
-          "volume": 9267900
-        },
         {
           "close": 284.06,
           "date": "2025-06-25",
@@ -17802,30 +17797,30 @@
         {
           "close": 334.14,
           "date": "2026-06-23",
-          "volume": 7544744
+          "volume": 7582200
+        },
+        {
+          "close": 333.45,
+          "date": "2026-06-24",
+          "volume": 7618290
         }
       ],
-      "last": 334.14,
+      "last": 333.45,
       "name": "JPMorgan Chase",
-      "oneMonthPercent": 10.6497,
-      "previousClose": 331.48,
+      "oneMonthPercent": 10.0495,
+      "previousClose": 334.14,
       "symbol": "JPM",
       "type": "Large holding",
-      "ytdPercent": 2.6607
+      "ytdPercent": 2.4487
     },
     {
-      "change": 1.26,
-      "changePercent": 0.9099,
+      "change": -2.83,
+      "changePercent": -2.0253,
       "currency": "USD",
       "exchange": "NYSE",
       "fiftyTwoWeekHigh": 171.47,
       "fiftyTwoWeekLow": 105.83,
       "history": [
-        {
-          "close": 108.34,
-          "date": "2025-06-24",
-          "volume": 24828300
-        },
         {
           "close": 108.37,
           "date": "2025-06-25",
@@ -19074,30 +19069,30 @@
         {
           "close": 139.73,
           "date": "2026-06-23",
-          "volume": 13682255
+          "volume": 13699400
+        },
+        {
+          "close": 136.9,
+          "date": "2026-06-24",
+          "volume": 15971841
         }
       ],
-      "last": 139.73,
+      "last": 136.9,
       "name": "Exxon Mobil",
-      "oneMonthPercent": -10.59,
-      "previousClose": 138.47,
+      "oneMonthPercent": -11.8424,
+      "previousClose": 139.73,
       "symbol": "XOM",
       "type": "Large holding",
-      "ytdPercent": 13.9258
+      "ytdPercent": 11.6184
     },
     {
-      "change": 2.57,
-      "changePercent": 0.6319,
+      "change": -3.45,
+      "changePercent": -0.843,
       "currency": "USD",
       "exchange": "NYSE",
       "fiftyTwoWeekHigh": 413.0,
       "fiftyTwoWeekLow": 237.77,
       "history": [
-        {
-          "close": 305.62,
-          "date": "2025-06-24",
-          "volume": 8781400
-        },
         {
           "close": 302.02,
           "date": "2025-06-25",
@@ -20346,16 +20341,21 @@
         {
           "close": 409.25,
           "date": "2026-06-23",
-          "volume": 5456867
+          "volume": 6675900
+        },
+        {
+          "close": 405.8,
+          "date": "2026-06-24",
+          "volume": 6795661
         }
       ],
-      "last": 409.25,
+      "last": 405.8,
       "name": "UnitedHealth Group",
-      "oneMonthPercent": 6.7702,
-      "previousClose": 406.68,
+      "oneMonthPercent": 6.0971,
+      "previousClose": 409.25,
       "symbol": "UNH",
       "type": "Large holding",
-      "ytdPercent": 21.6558
+      "ytdPercent": 20.6302
     }
   ]
 }
