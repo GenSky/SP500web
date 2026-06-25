@@ -26,3 +26,7 @@ node_modules/
 # Local QA artifacts
 .playwright-cli/
 output/
+# Local build output and machine-specific npm config
+.npmrc
+dist/
+.vite/

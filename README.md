@@ -1,36 +1,50 @@
-# S&P500web
+# Gensky Value Picker
 
-A static GitHub Pages dashboard for S&P 500 market snapshots.
+A research-only stock value dashboard for ranking ideas across multiple universes:
 
-The site displays the S&P 500 index, major S&P 500 ETF proxies, and a small set of large benchmark holdings. Market data is pulled by a server-side updater and committed to `data/market.json`, so the public website does not expose an API key or rely on browser-side cross-origin requests.
+- Nasdaq-100
+- S&P 500
+- Custom Watchlist
+- All Stocks Combined
 
-## Data Pipeline
+The app ranks sample stock metrics with a risk-adjusted value model, suggests paper trade structures, and stores tracked ideas in `localStorage`.
 
-- `scripts/update_market_data.py` pulls free delayed chart data from the Yahoo Finance chart endpoint.
-- `data/market.json` stores the latest generated snapshot and one year of daily closing history.
-- `.github/workflows/update-market-data.yml` refreshes the JSON on weekdays after the U.S. market close and can also be run manually from GitHub Actions.
+> Sample data only. Replace with fresh market data before making real decisions.
 
-The data is for informational display only and should not be treated as trading, investment, or financial advice.
+## What It Does
 
-## Local Preview
+- Filters by universe, sector, minimum value score, maximum debt risk, positive free cash flow, analyst upside, drawdown, and value trap avoidance.
+- Scores every stock across value, quality, balance sheet, growth, momentum setup, value trap risk, and final risk-adjusted value.
+- Ranks top undervalued Nasdaq-100 stocks, S&P 500 stocks, overall ideas, and sector leaders.
+- Labels ideas as cheap but risky, quality value, deep value, turnaround, or avoid / possible trap.
+- Suggests research-only trade ideas: long shares / LEAPS, cash-secured put, bull call spread, watchlist only, or avoid.
+- Tracks paper ideas with their source universe: `NASDAQ_100`, `SP500`, or `CUSTOM`.
+- Imports custom watchlists from pasted CSV-style data.
 
-Because the page fetches `data/market.json`, preview it with a local web server:
+## Local Development
+
+The local folder name contains an ampersand, so this repo uses a local `.npmrc` on this machine to make npm scripts run through PowerShell. The file is intentionally ignored and not required on CI.
 
 ```bash
-python -m http.server 8000
+npm install
+npm run dev
+npm run build
 ```
 
-Then open `http://localhost:8000/`.
+## Data
 
-## Refresh Data Locally
+Current app data is sample-only TypeScript data:
 
-```bash
-python scripts/update_market_data.py
-```
+- `src/data/sampleNasdaqStocks.ts`
+- `src/data/sampleSp500Stocks.ts`
 
-## Deploy
+The S&P 500 sample file includes 50+ S&P 500-style stocks across Technology, Communication Services, Consumer Discretionary, Consumer Staples, Financials, Healthcare, Industrials, Energy, Utilities, Real Estate, and Materials.
 
-This repository is configured for GitHub Pages from the `main` branch root.
+Future data-source options are documented in `docs/data-source-plan.md`.
+
+## Deployment
+
+GitHub Pages deploys the built Vite `dist` output through `.github/workflows/deploy-pages.yml`.
 
 Published URL:
 
@@ -38,11 +52,6 @@ Published URL:
 https://gensky.github.io/SP500web/
 ```
 
-## Files
+## Guardrails
 
-- `index.html` - Page structure
-- `style.css` - Responsive dashboard styling
-- `app.js` - Data rendering, chart drawing, and range controls
-- `data/market.json` - Generated market data snapshot
-- `scripts/update_market_data.py` - Free data fetcher
-- `.github/workflows/update-market-data.yml` - Scheduled data refresh
+This app does not auto-trade, does not execute through a broker, and does not require paid APIs in this version. It is for research, idea generation, and paper tracking only.
