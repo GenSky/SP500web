@@ -448,7 +448,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            ${tableHeader("Ticker", "ticker")}<th>Sector</th>${tableHeader("Price", "price")}${tableHeader("Final Score", "final")}${tableHeader("Value", "value")}${tableHeader("Quality", "quality")}${tableHeader("Balance", "balance")}${tableHeader("Growth", "growth")}${tableHeader("Momentum", "momentum")}${tableHeader("Trap Risk", "trapRisk")}<th>What it does</th>${tableHeader("Trade", "trade")}<th>Track</th>
+            ${tableHeader("Ticker", "ticker")}${tableHeader("$", "price")}${tableHeader("Final", "final")}${tableHeader("Value", "value")}${tableHeader("Qual", "quality")}${tableHeader("Bal", "balance")}${tableHeader("Grow", "growth")}${tableHeader("Mom", "momentum")}${tableHeader("Trap", "trapRisk")}${tableHeader("Trade", "trade")}<th>Track</th>
           </tr>
         </thead>
         <tbody>
@@ -514,7 +514,6 @@ function renderStockRow(stock: ScoredStock): string {
     return `
       <tr class="needs-data-row" data-stock-ticker="${escapeHtml(stock.ticker)}">
         <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-        <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
         <td data-label="Price">--</td>
         <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
         <td data-label="Value">--</td>
@@ -523,7 +522,6 @@ function renderStockRow(stock: ScoredStock): string {
         <td data-label="Growth">--</td>
         <td data-label="Momentum">--</td>
         <td data-label="Trap risk">--</td>
-        <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
         <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
         <td data-label="Track"><button type="button" disabled>Needs data</button></td>
       </tr>
@@ -533,7 +531,6 @@ function renderStockRow(stock: ScoredStock): string {
   return `
     <tr data-stock-ticker="${escapeHtml(stock.ticker)}">
       <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-      <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
       <td data-label="Price">${currency(stock.price)}</td>
       <td data-label="Final score"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
       <td data-label="Value">${formatScore(stock.valueScore)}</td>
@@ -542,7 +539,6 @@ function renderStockRow(stock: ScoredStock): string {
       <td data-label="Growth">${formatScore(stock.growthScore)}</td>
       <td data-label="Momentum">${formatScore(stock.momentumSetupScore)}</td>
       <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
-      <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
       <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this idea?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
       <td data-label="Track">${trackButton(stock)}</td>
     </tr>

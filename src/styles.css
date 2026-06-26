@@ -1171,3 +1171,80 @@ th { background: #dbeafe; }
     padding: 5px 8px;
   }
 }
+
+/* Compact score-first mobile table overrides */
+@media (max-width: 700px) {
+  .table-wrap table {
+    min-width: 690px;
+  }
+
+  .table-wrap th,
+  .table-wrap td {
+    padding: 6px 4px;
+    font-size: .68rem;
+    line-height: 1.18;
+  }
+
+  .table-wrap th:nth-child(1),
+  .table-wrap td:nth-child(1) {
+    min-width: 100px;
+    max-width: 82px;
+  }
+
+  .table-wrap th:nth-child(2),
+  .table-wrap td:nth-child(2) {
+    min-width: 52px;
+  }
+
+  .table-wrap th:nth-child(n+3):nth-child(-n+9),
+  .table-wrap td:nth-child(n+3):nth-child(-n+9) {
+    min-width: 42px;
+    text-align: center;
+  }
+
+  .table-wrap th:nth-child(10),
+  .table-wrap td:nth-child(10) {
+    min-width: 82px;
+  }
+
+  .table-wrap th:nth-child(11),
+  .table-wrap td:nth-child(11) {
+    min-width: 60px;
+  }
+
+  .table-wrap .ticker-link {
+    max-width: 94px;
+  }
+
+  .table-wrap .ticker-link strong {
+    font-size: .8rem;
+  }
+
+  .table-wrap .ticker-link small {
+    overflow: hidden;
+    max-width: 94px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .58rem;
+  }
+
+  .table-wrap .score-pill,
+  .table-wrap .risk,
+  .table-wrap .status-pill {
+    min-width: 28px;
+    padding: 2px 4px;
+    font-size: .72rem;
+  }
+
+  .table-wrap details {
+    max-width: 100px;
+  }
+
+  .table-wrap details summary {
+    display: none;
+  }
+
+  .table-wrap .trade-simple {
+    display: none;
+  }
+}
