@@ -15,6 +15,7 @@ The app includes full Nasdaq-100 and S&P 500 constituent coverage, ranks stocks 
 
 - Filters by universe, sector, minimum value score, maximum debt risk, positive free cash flow, analyst upside, drawdown, and value trap avoidance.
 - Scores every stock across value, quality, balance sheet, growth, momentum setup, value trap risk, and final risk-adjusted value.
+- Opens a ticker chart panel with weekly candles, 20/50-week moving averages, volume, score tiles, and trade rationale.
 - Ranks top undervalued Nasdaq-100 stocks, S&P 500 stocks, overall ideas, and sector leaders.
 - Labels ideas as cheap but risky, quality value, deep value, turnaround, or avoid / possible trap.
 - Suggests research-only trade ideas: long shares / LEAPS, cash-secured put, bull call spread, watchlist only, or avoid.
@@ -30,6 +31,8 @@ npm install
 npm run dev
 npm run build
 npm run refresh:free-data
+npm run refresh:free-charts
+npm run refresh:free-all
 ```
 
 ## Data
@@ -41,8 +44,9 @@ Current app data combines full public index constituent lists, a generated free 
 - `src/data/sampleNasdaqStocks.ts`
 - `src/data/sampleSp500Stocks.ts`
 - `scripts/fetch-free-market-data.mjs`
+- `scripts/fetch-free-chart-data.mjs`
 
-Run `npm run refresh:free-data` to regenerate `src/data/freeMarketData.ts` from free Yahoo Finance data. This is no-key and no-paid-API, but it is unofficial, can be delayed, incomplete, rate-limited, or unavailable. The generated notes flag fields that needed defaults.
+Run `npm run refresh:free-data` to regenerate `src/data/freeMarketData.ts` from free Yahoo Finance data. Run `npm run refresh:free-charts` to regenerate `src/data/freeChartData.ts` with one-year weekly OHLCV chart history. `npm run refresh:free-all` runs both. This is no-key and no-paid-API, but it is unofficial, can be delayed, incomplete, rate-limited, or unavailable. The generated notes flag fields that needed defaults.
 
 The constituent file covers the full Nasdaq-100 and S&P 500 security rows used by the selector. Stocks without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are shown as `Needs data` and are excluded from rankings until sample, free refresh, CSV, or future API data supplies those fields.
 

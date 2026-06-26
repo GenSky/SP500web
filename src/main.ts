@@ -1,4 +1,5 @@
 import "./styles.css";
+import type { ChartPoint } from "./data/freeChartData";
 import { parseCsvWatchlist } from "./lib/csvImport";
 import { scoreStock } from "./lib/scoring";
 import { loadCustomStocks, loadTrackedTrades, saveCustomStocks, saveTrackedTrades } from "./lib/storage";
@@ -239,6 +240,13 @@ function bindEvents(scored: ScoredStock[]): void {
   bindCheckbox("positive-fcf", (value) => { filters = { ...filters, positiveFcfOnly: value }; render(); });
   bindCheckbox("avoid-traps", (value) => { filters = { ...filters, avoidValueTraps: value }; render(); });
 
+  document.querySelectorAll<HTMLButtonElement>("[data-symbol]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const stock = scored.find((item) => item.ticker === button.dataset.symbol);
+      if (stock) void openStockPanel(stock);
+    });
+  });
+
   document.querySelectorAll<HTMLButtonElement>("[data-track]").forEach((button) => {
     button.addEventListener("click", () => {
       const stock = scored.find((item) => item.ticker === button.dataset.track);
@@ -317,7 +325,7 @@ function renderStockRow(stock: ScoredStock): string {
   if (stock.hasMetrics === false) {
     return `
       <tr class="needs-data-row">
-        <td><strong>${stock.ticker}</strong><small>${stock.companyName}</small></td>
+        <td><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
         <td>${displayUniverse(stock)}</td>
         <td>${stock.sector}<small>${stock.industry}</small></td>
         <td>--</td>
@@ -337,7 +345,7 @@ function renderStockRow(stock: ScoredStock): string {
 
   return `
     <tr>
-      <td><strong>${stock.ticker}</strong><small>${stock.companyName}</small></td>
+      <td><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
       <td>${displayUniverse(stock)}</td>
       <td>${stock.sector}<small>${stock.industry}</small></td>
       <td>${currency(stock.price)}</td>
@@ -355,6 +363,154 @@ function renderStockRow(stock: ScoredStock): string {
   `;
 }
 
+async function openStockPanel(stock: ScoredStock): Promise<void> {
+  document.querySelector("[data-chart-modal]")?.remove();
+  const { freeChartData } = await import("./data/freeChartData");
+  const points = freeChartData[stock.ticker] ?? [];
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="chart-modal" data-chart-modal role="dialog" aria-modal="true" aria-label="${escapeHtml(stock.ticker)} chart">
+      <button class="chart-backdrop" type="button" data-close-chart aria-label="Close chart"></button>
+      <section class="chart-panel">
+        <header class="chart-header">
+          <div>
+            <p class="eyebrow">Ticker chart</p>
+            <h3>${escapeHtml(stock.ticker)} <span>${escapeHtml(stock.companyName)}</span></h3>
+            <p>${escapeHtml(stock.sector)} / ${escapeHtml(stock.industry)} / ${escapeHtml(displayUniverse(stock))}</p>
+          </div>
+          <button class="chart-close" type="button" data-close-chart>Close</button>
+        </header>
+        ${points.length >= 2 ? renderPriceChart(points, stock) : `<div class="empty-state">Chart data is not available for ${escapeHtml(stock.ticker)} yet. Run the free chart refresh again later.</div>`}
+        <div class="chart-stats">
+          ${metricTile("Price", currency(stock.price))}
+          ${metricTile("Final score", formatScore(stock.finalRiskAdjustedValueScore))}
+          ${metricTile("Value", formatScore(stock.valueScore))}
+          ${metricTile("Quality", formatScore(stock.qualityScore))}
+          ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
+          ${metricTile("Forward P/E", formatNumber(stock.forwardPE))}
+          ${metricTile("FCF yield", `${formatNumber(stock.freeCashFlowYield)}%`)}
+          ${metricTile("Drawdown", `${formatNumber(stock.oneYearDrawdownPercent)}%`)}
+          ${metricTile("Market cap", compactNumber(stock.marketCap))}
+        </div>
+        <div class="chart-thesis">
+          <strong>${escapeHtml(stock.tradeIdea.action)}</strong>
+          <p>${escapeHtml(stock.tradeIdea.why)}</p>
+          <small>Chart data is a generated one-year weekly view from free Yahoo Finance data. Research only; verify current quotes and filings.</small>
+        </div>
+      </section>
+    </div>
+  `);
+
+  const modal = document.querySelector<HTMLElement>("[data-chart-modal]");
+  const close = (): void => modal?.remove();
+  modal?.querySelectorAll<HTMLButtonElement>("[data-close-chart]").forEach((button) => button.addEventListener("click", close));
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      close();
+      document.removeEventListener("keydown", onKeyDown);
+    }
+  };
+  document.addEventListener("keydown", onKeyDown);
+}
+
+function renderPriceChart(points: ChartPoint[], stock: ScoredStock): string {
+  const width = 860;
+  const height = 390;
+  const left = 56;
+  const right = 18;
+  const top = 18;
+  const priceHeight = 255;
+  const volumeTop = 295;
+  const volumeHeight = 58;
+  const plotWidth = width - left - right;
+  const highs = points.map((point) => point[2]);
+  const lows = points.map((point) => point[3]);
+  const closes = points.map((point) => point[4]);
+  const volumes = points.map((point) => point[5]);
+  const minPriceRaw = Math.min(...lows);
+  const maxPriceRaw = Math.max(...highs);
+  const pad = Math.max((maxPriceRaw - minPriceRaw) * 0.08, maxPriceRaw * 0.01);
+  const minPrice = minPriceRaw - pad;
+  const maxPrice = maxPriceRaw + pad;
+  const maxVolume = Math.max(...volumes, 1);
+  const xFor = (index: number): number => left + (points.length === 1 ? 0 : (index / (points.length - 1)) * plotWidth);
+  const yFor = (price: number): number => top + ((maxPrice - price) / (maxPrice - minPrice || 1)) * priceHeight;
+  const candleWidth = Math.max(3, Math.min(9, plotWidth / points.length * 0.58));
+  const closePath = linePath(points.map((point, index) => [xFor(index), yFor(point[4])]));
+  const ma20 = movingAverage(closes, 20).map((value, index) => value === null ? null : [xFor(index), yFor(value)] as [number, number]);
+  const ma50 = movingAverage(closes, 50).map((value, index) => value === null ? null : [xFor(index), yFor(value)] as [number, number]);
+  const first = points[0];
+  const last = points[points.length - 1];
+  const change = last[4] - first[4];
+  const changePercent = first[4] !== 0 ? (change / first[4]) * 100 : 0;
+  const changeClass = change >= 0 ? "positive" : "negative";
+  const grid = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const y = top + ratio * priceHeight;
+    const label = maxPrice - ratio * (maxPrice - minPrice);
+    return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" /><text x="8" y="${y + 4}">${formatNumber(label)}</text>`;
+  }).join("");
+  const candles = points.map((point, index) => {
+    const [date, open, high, low, close, volume] = point;
+    const x = xFor(index);
+    const isUp = close >= open;
+    const color = isUp ? "#16a34a" : "#ef4444";
+    const bodyTop = Math.min(yFor(open), yFor(close));
+    const bodyHeight = Math.max(1.5, Math.abs(yFor(open) - yFor(close)));
+    const volumeHeightValue = (volume / maxVolume) * volumeHeight;
+    return `<g aria-label="${date}">
+      <line class="wick" x1="${x}" y1="${yFor(high)}" x2="${x}" y2="${yFor(low)}" stroke="${color}" />
+      <rect x="${x - candleWidth / 2}" y="${bodyTop}" width="${candleWidth}" height="${bodyHeight}" fill="${color}" />
+      <rect class="volume-bar" x="${x - candleWidth / 2}" y="${volumeTop + volumeHeight - volumeHeightValue}" width="${candleWidth}" height="${volumeHeightValue}" fill="${color}" />
+    </g>`;
+  }).join("");
+
+  return `<div class="chart-wrap">
+    <div class="chart-meta">
+      <div><strong>${currency(last[4])}</strong><span class="${changeClass}">${change >= 0 ? "+" : ""}${formatNumber(change)} (${change >= 0 ? "+" : ""}${formatNumber(changePercent)}%)</span></div>
+      <div><small>Weekly candles</small><small>MA20 / MA50 / Volume</small></div>
+    </div>
+    <svg class="price-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(stock.ticker)} one year weekly price chart">
+      <rect width="${width}" height="${height}" rx="8" />
+      <g class="grid">${grid}</g>
+      <g>${candles}</g>
+      <path class="close-line" d="${closePath}" />
+      <path class="ma ma20" d="${segmentedLinePath(ma20)}" />
+      <path class="ma ma50" d="${segmentedLinePath(ma50)}" />
+      <line class="volume-rule" x1="${left}" y1="${volumeTop}" x2="${width - right}" y2="${volumeTop}" />
+      <text class="date-label" x="${left}" y="${height - 14}">${first[0]}</text>
+      <text class="date-label" x="${width - right}" y="${height - 14}" text-anchor="end">${last[0]}</text>
+    </svg>
+  </div>`;
+}
+
+function movingAverage(values: number[], windowSize: number): Array<number | null> {
+  return values.map((_, index) => {
+    if (index + 1 < windowSize) return null;
+    const windowValues = values.slice(index + 1 - windowSize, index + 1);
+    return windowValues.reduce((sum, value) => sum + value, 0) / windowSize;
+  });
+}
+
+function linePath(points: Array<[number, number]>): string {
+  return points.map(([x, y], index) => `${index === 0 ? "M" : "L"}${roundCoord(x)} ${roundCoord(y)}`).join(" ");
+}
+
+function segmentedLinePath(points: Array<[number, number] | null>): string {
+  let path = "";
+  let drawing = false;
+  points.forEach((point) => {
+    if (!point) {
+      drawing = false;
+      return;
+    }
+    path += `${drawing ? " L" : " M"}${roundCoord(point[0])} ${roundCoord(point[1])}`;
+    drawing = true;
+  });
+  return path.trim();
+}
+
+function metricTile(label: string, value: string): string {
+  return `<article><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></article>`;
+}
 function renderTracker(): string {
   if (trackedTrades.length === 0) {
     return `<div class="empty-state">No paper trades tracked yet.</div>`;
@@ -467,6 +623,22 @@ function formatScore(value: number | undefined): string {
   return Number.isFinite(value) ? String(Math.round(Number(value))) : "--";
 }
 
+function formatNumber(value: number): string {
+  return Number.isFinite(value) ? new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value) : "--";
+}
+
+function compactNumber(value: number): string {
+  if (!Number.isFinite(value)) return "--";
+  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(value);
+}
+
+function roundCoord(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char] ?? char));
+}
 function currency(value: number): string {
   if (!Number.isFinite(value)) return "--";
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);

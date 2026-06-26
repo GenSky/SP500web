@@ -145,3 +145,58 @@ details p { margin: 8px 0 0; color: var(--muted); }
   .top-actions { justify-content: flex-start; }
   .tracker-card { grid-template-columns: 1fr; }
 }
+.ticker-link {
+  display: grid;
+  gap: 3px;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.ticker-link:hover strong { color: var(--blue); text-decoration: underline; }
+.ticker-link small { color: var(--muted); }
+
+.chart-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 22px; }
+.chart-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; background: rgba(15, 23, 42, .62); cursor: default; }
+.chart-panel { position: relative; width: min(1040px, 100%); max-height: min(92vh, 980px); overflow: auto; border: 1px solid #273244; border-radius: 8px; background: #111827; color: #e5edf7; box-shadow: 0 30px 90px rgba(0, 0, 0, .45); }
+.chart-header { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 22px 24px 16px; border-bottom: 1px solid rgba(148, 163, 184, .22); }
+.chart-header h3 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.8rem); letter-spacing: 0; }
+.chart-header h3 span { color: #9fb0c7; font-size: .55em; font-weight: 700; }
+.chart-header p:not(.eyebrow) { margin: 8px 0 0; color: #9fb0c7; }
+.chart-close { background: #253044; border-color: #39475e; }
+.chart-wrap { padding: 18px 24px 0; }
+.chart-meta { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 10px; }
+.chart-meta strong { margin-right: 10px; font-size: 2rem; }
+.chart-meta small { display: block; color: #9fb0c7; text-align: right; }
+.positive { color: #22c55e; }
+.negative { color: #ef4444; }
+.price-chart { display: block; width: 100%; height: auto; }
+.price-chart > rect { fill: #172132; }
+.price-chart .grid line, .volume-rule { stroke: rgba(148, 163, 184, .18); stroke-width: 1; }
+.price-chart .grid text, .date-label { fill: #9fb0c7; font-size: 12px; }
+.price-chart .wick { stroke-width: 1.4; }
+.price-chart .volume-bar { opacity: .42; }
+.price-chart .close-line { fill: none; stroke: #60a5fa; stroke-width: 1.6; opacity: .8; }
+.price-chart .ma { fill: none; stroke-width: 1.7; }
+.price-chart .ma20 { stroke: #d946ef; }
+.price-chart .ma50 { stroke: #f59e0b; }
+.chart-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; padding: 18px 24px; }
+.chart-stats article { padding: 12px; border: 1px solid rgba(148, 163, 184, .22); border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.chart-stats small { display: block; color: #9fb0c7; text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; font-weight: 850; }
+.chart-stats strong { display: block; margin-top: 5px; font-size: 1.12rem; }
+.chart-thesis { margin: 0 24px 24px; padding: 16px; border: 1px solid rgba(96, 165, 250, .24); border-radius: 8px; background: rgba(96, 165, 250, .08); }
+.chart-thesis strong { display: block; margin-bottom: 8px; }
+.chart-thesis p { margin: 0 0 10px; color: #c6d4e6; }
+.chart-thesis small { color: #9fb0c7; }
+
+@media (max-width: 640px) {
+  .chart-modal { padding: 10px; }
+  .chart-header, .chart-meta { align-items: flex-start; flex-direction: column; }
+  .chart-meta small { text-align: left; }
+  .chart-wrap, .chart-stats { padding-left: 14px; padding-right: 14px; }
+  .chart-thesis { margin-left: 14px; margin-right: 14px; }
+}

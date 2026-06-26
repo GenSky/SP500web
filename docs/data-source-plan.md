@@ -8,7 +8,7 @@ The app uses full public Nasdaq-100 and S&P 500 constituent lists, generated fre
 
 ## Current Free Refresh
 
-`scripts/fetch-free-market-data.mjs` generates `src/data/freeMarketData.ts` from free Yahoo Finance data through `yahoo-finance2`. It pulls current quote, market cap, valuation, FCF-derived yield, growth, debt, analyst target-derived upside, and 52-week drawdown where available. This is useful for broad no-cost research coverage, but it is unofficial and should be verified against filings, exchange data, and a current quote before decisions.
+`scripts/fetch-free-market-data.mjs` generates `src/data/freeMarketData.ts` from free Yahoo Finance data through `yahoo-finance2`. It pulls current quote, market cap, valuation, FCF-derived yield, growth, debt, analyst target-derived upside, and 52-week drawdown where available. `scripts/fetch-free-chart-data.mjs` generates `src/data/freeChartData.ts` with one-year weekly OHLCV chart history for the ticker detail panel. This is useful for broad no-cost research coverage, but it is unofficial and should be verified against filings, exchange data, and a current quote before decisions.
 
 ## Future Data Options
 
