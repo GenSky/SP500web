@@ -503,7 +503,7 @@ function renderStockCard(stock: ScoredStock): string {
           ${metricTile("Sector", stock.sector)}
           ${metricTile("Industry", stock.industry)}
         </div>
-        <div class="stock-card-trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
+        <div class="stock-card-trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></div>
         <button type="button" disabled>Needs data</button>
       </article>
     `;
@@ -529,7 +529,7 @@ function renderStockCard(stock: ScoredStock): string {
         <strong>What it does</strong>
         <span>${escapeHtml(companySnippet(stock))}</span>
       </div>
-      <div class="stock-card-trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
+      <div class="stock-card-trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this idea?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></div>
       ${trackButton(stock)}
     </article>
   `;
@@ -550,7 +550,7 @@ function renderStockRow(stock: ScoredStock): string {
         <td data-label="Momentum">--</td>
         <td data-label="Trap risk">--</td>
         <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
-        <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+        <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
         <td data-label="Track"><button type="button" disabled>Needs data</button></td>
       </tr>
     `;
@@ -569,7 +569,7 @@ function renderStockRow(stock: ScoredStock): string {
       <td data-label="Momentum">${formatScore(stock.momentumSetupScore)}</td>
       <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
       <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
-      <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+      <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this idea?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
       <td data-label="Track">${trackButton(stock)}</td>
     </tr>
   `;
@@ -605,7 +605,7 @@ async function openStockPanel(stock: ScoredStock): Promise<void> {
         </div>
         <div class="chart-thesis">
           <strong>${escapeHtml(stock.tradeIdea.action)}</strong>
-          <p>${escapeHtml(stock.tradeIdea.why)}</p>
+          ${renderTradeWhy(stock.tradeIdea.why)}
           <small>Chart data is a generated one-year weekly view from free Yahoo Finance data. Research only; verify current quotes and filings.</small>
         </div>
       </section>
@@ -739,6 +739,12 @@ function renderTracker(): string {
       </article>
     `).join("")}
   </div>`;
+}
+
+function renderTradeWhy(text: string): string {
+  const reasons = text.split(/\n+/).map((reason) => reason.trim()).filter(Boolean);
+  if (reasons.length <= 1) return `<p>${escapeHtml(text)}</p>`;
+  return `<ul class="trade-reasons">${reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
 }
 
 function renderTrackMessage(): string {

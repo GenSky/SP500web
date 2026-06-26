@@ -885,3 +885,27 @@ th { background: #dbeafe; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Plain-English trade explanation overrides */
+.trade-reasons {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.trade-reasons li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.trade-reasons li::before {
+  position: absolute;
+  left: 0;
+  content: "-";
+  color: var(--ink);
+  font-weight: 900;
+}
