@@ -15,6 +15,11 @@ if (!appRoot) {
 
 const app = appRoot;
 
+type ViewMode = "cards" | "table";
+type SortKey = "final" | "value" | "quality" | "trapRisk" | "upside" | "ticker";
+
+let viewMode: ViewMode = "cards";
+let sortKey: SortKey = "final";
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
 let filters: FilterState = {
@@ -34,7 +39,7 @@ function render(): void {
   const allStocks = mergeStocks(customStocks);
   const scored = scoreAll(allStocks);
   const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
-  const visible = applyFilters(scored, filters).sort(byFinal);
+  const visible = applyFilters(scored, filters).sort(bySelectedSort);
   const needsDataCount = visible.filter((stock) => stock.hasMetrics === false).length;
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
 
@@ -47,14 +52,16 @@ function render(): void {
         </a>
         <div class="top-actions">
           <a href="#best-ideas">Best Ideas</a>
+          <a href="#filters">Filters</a>
           <a href="#tracker">Tracker</a>
           <a href="#csv-import">CSV Import</a>
         </div>
       </nav>
       <section class="hero" id="top">
         <div>
-          <p class="eyebrow">Stock universe</p>
-          <h1>Value scanner.</h1>
+          <p class="eyebrow">Start here</p>
+          <h1>Pick a stock list.</h1>
+          <p class="hero-copy">The list ranks stocks from most interesting to least interesting. Higher final score is better. Lower trap risk is safer.</p>
           <p class="warning">Research only. Verify data before decisions.</p>
         </div>
         <div class="universe-panel">
@@ -76,14 +83,29 @@ function render(): void {
     </header>
 
     <main>
-      <section class="section filters" aria-label="Filters">
-        <label>Sector<select id="sector-filter">${sectors.map((sector) => option(sector, sector, filters.sector)).join("")}</select></label>
-        <label>Minimum value score<input id="min-value-score" type="number" min="0" max="100" value="${filters.minValueScore}"></label>
-        <label>Maximum debt risk<input id="max-debt-risk" type="number" min="0" max="100" value="${filters.maxDebtRisk}"></label>
-        <label>Analyst upside greater than<input id="min-upside" type="number" min="0" max="100" value="${filters.minAnalystUpside}"></label>
-        <label>Drawdown greater than<input id="min-drawdown" type="number" min="0" max="100" value="${filters.minDrawdown}"></label>
-        <label class="checkbox"><input id="positive-fcf" type="checkbox" ${filters.positiveFcfOnly ? "checked" : ""}> Positive FCF only</label>
-        <label class="checkbox"><input id="avoid-traps" type="checkbox" ${filters.avoidValueTraps ? "checked" : ""}> Avoid value traps</label>
+      <section class="section guide" aria-label="How to read this scanner">
+        <article>
+          <strong>1. Choose a universe</strong>
+          <span>S&P 500, Nasdaq-100, custom names, or everything combined.</span>
+        </article>
+        <article>
+          <strong>2. Read the final score</strong>
+          <span>70+ means strong value setup. 50-69 means mixed. Under 50 usually needs a better reason.</span>
+        </article>
+        <article>
+          <strong>3. Check trap risk</strong>
+          <span>0-30 is cleaner. 31-60 needs caution. 61+ can be cheap for a bad reason.</span>
+        </article>
+      </section>
+
+      <section class="section legend" aria-label="Score legend">
+        <h2>Score legend</h2>
+        <div class="legend-grid">
+          ${legendItem("Final score", "Best all-in ranking after valuation, quality, debt, growth, momentum, and trap penalties.")}
+          ${legendItem("Value score", "How cheap the stock looks using P/E, EV/EBITDA, FCF yield, PEG, and related metrics.")}
+          ${legendItem("Quality score", "Business strength and cleaner fundamentals. Higher is better.")}
+          ${legendItem("Trap risk", "The warning score. Higher means cheap may be dangerous because debt, weak cash flow, weak growth, or bad momentum is showing up.")}
+        </div>
       </section>
 
       <section class="section score-summary" aria-label="Score outputs">
@@ -102,16 +124,34 @@ function render(): void {
           </div>
           <p>Sorted by final risk-adjusted value.</p>
         </div>
-        <div class="score-key">
-          <span>Value Score</span>
-          <span>Quality Score</span>
-          <span>Balance Sheet Score</span>
-          <span>Growth Score</span>
-          <span>Momentum Setup Score</span>
-          <span>Value Trap Risk Score</span>
-          <span>Final Risk-Adjusted Value Score</span>
+        <div class="results-toolbar" aria-label="Results controls">
+          <div class="view-switch" aria-label="Choose results view">
+            <button type="button" data-view-mode="cards" class="${viewMode === "cards" ? "active" : ""}">Cards</button>
+            <button type="button" data-view-mode="table" class="${viewMode === "table" ? "active" : ""}">Table</button>
+          </div>
+          <label>Sort
+            <select id="sort-select">
+              ${option("final", "Best overall score", sortKey)}
+              ${option("value", "Cheapest valuation", sortKey)}
+              ${option("quality", "Highest quality", sortKey)}
+              ${option("trapRisk", "Lowest trap risk", sortKey)}
+              ${option("upside", "Highest analyst upside", sortKey)}
+              ${option("ticker", "Ticker A to Z", sortKey)}
+            </select>
+          </label>
         </div>
-        ${renderTable(visible)}
+        ${renderResults(visible)}
+      </section>
+
+      <section class="section filter-panel" id="filters" aria-label="Filters">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Filters</p>
+            <h2>Narrow the list after you understand the scores.</h2>
+          </div>
+          <p>Leave these alone at first. Use them when you want a cleaner list, less debt risk, or more analyst upside.</p>
+        </div>
+        <div class="filters">${renderFilters(sectors)}</div>
       </section>
 
       <section class="section best-ideas" id="best-ideas">
@@ -239,6 +279,14 @@ function bindEvents(scored: ScoredStock[]): void {
   bindNumber("min-drawdown", (value) => { filters = { ...filters, minDrawdown: value }; render(); });
   bindCheckbox("positive-fcf", (value) => { filters = { ...filters, positiveFcfOnly: value }; render(); });
   bindCheckbox("avoid-traps", (value) => { filters = { ...filters, avoidValueTraps: value }; render(); });
+  bindSelect("sort-select", (value) => { sortKey = value as SortKey; render(); });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-view-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      viewMode = button.dataset.viewMode as ViewMode;
+      render();
+    });
+  });
 
   document.querySelectorAll<HTMLButtonElement>("[data-symbol]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -301,6 +349,30 @@ function bindEvents(scored: ScoredStock[]): void {
   });
 }
 
+function renderFilters(sectors: string[]): string {
+  return `
+    <label>Sector<select id="sector-filter">${sectors.map((sector) => option(sector, sector, filters.sector)).join("")}</select></label>
+    <label>Minimum value score<input id="min-value-score" type="number" min="0" max="100" value="${filters.minValueScore}"></label>
+    <label>Maximum debt risk<input id="max-debt-risk" type="number" min="0" max="100" value="${filters.maxDebtRisk}"></label>
+    <label>Analyst upside greater than<input id="min-upside" type="number" min="0" max="100" value="${filters.minAnalystUpside}"></label>
+    <label>Drawdown greater than<input id="min-drawdown" type="number" min="0" max="100" value="${filters.minDrawdown}"></label>
+    <label class="checkbox"><input id="positive-fcf" type="checkbox" ${filters.positiveFcfOnly ? "checked" : ""}> Positive FCF only</label>
+    <label class="checkbox"><input id="avoid-traps" type="checkbox" ${filters.avoidValueTraps ? "checked" : ""}> Avoid value traps</label>
+  `;
+}
+
+function renderResults(stocks: ScoredStock[]): string {
+  return viewMode === "table" ? renderTable(stocks) : renderCards(stocks);
+}
+
+function renderCards(stocks: ScoredStock[]): string {
+  if (stocks.length === 0) {
+    return `<div class="empty-state">No stocks match the current filters.</div>`;
+  }
+
+  return `<div class="stock-cards">${stocks.map(renderStockCard).join("")}</div>`;
+}
+
 function renderTable(stocks: ScoredStock[]): string {
   if (stocks.length === 0) {
     return `<div class="empty-state">No stocks match the current filters.</div>`;
@@ -319,6 +391,52 @@ function renderTable(stocks: ScoredStock[]): string {
         </tbody>
       </table>
     </div>`;
+}
+
+function renderStockCard(stock: ScoredStock): string {
+  if (stock.hasMetrics === false) {
+    return `
+      <article class="stock-card needs-data-row">
+        <div class="stock-card-main">
+          <button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button>
+          <span class="status-pill muted">Needs data</span>
+        </div>
+        <div class="stock-card-grid">
+          ${metricTile("Universe", displayUniverse(stock))}
+          ${metricTile("Sector", stock.sector)}
+          ${metricTile("Industry", stock.industry)}
+        </div>
+        <div class="stock-card-trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
+        <button type="button" disabled>Needs data</button>
+      </article>
+    `;
+  }
+
+  return `
+    <article class="stock-card">
+      <div class="stock-card-main">
+        <button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button>
+        <div class="stock-card-score">
+          <small>Final</small>
+          <span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span>
+        </div>
+      </div>
+      <div class="stock-card-grid">
+        ${metricTile("Price", currency(stock.price))}
+        ${metricTile("Universe", displayUniverse(stock))}
+        ${metricTile("Sector", stock.sector)}
+        ${metricTile("Value", formatScore(stock.valueScore))}
+        ${metricTile("Quality", formatScore(stock.qualityScore))}
+        ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
+      </div>
+      <div class="stock-card-note">
+        <strong>${stock.category}</strong>
+        <span>${plainScoreMeaning(stock)}</span>
+      </div>
+      <div class="stock-card-trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
+      <button type="button" data-track="${stock.ticker}">Track</button>
+    </article>
+  `;
 }
 
 function renderStockRow(stock: ScoredStock): string {
@@ -550,6 +668,21 @@ function topIdeas(stocks: ScoredStock[], universe: StockUniverse): ScoredStock[]
   return filterByUniverse(stocks, universe).sort(byFinal).slice(0, 5);
 }
 
+function bySelectedSort(a: ScoredStock, b: ScoredStock): number {
+  if (a.hasMetrics === false && b.hasMetrics !== false) return 1;
+  if (a.hasMetrics !== false && b.hasMetrics === false) return -1;
+  if (sortKey === "ticker") return a.ticker.localeCompare(b.ticker);
+  if (sortKey === "trapRisk") return a.valueTrapRiskScore - b.valueTrapRiskScore || byFinal(a, b);
+  const fields: Record<Exclude<SortKey, "ticker" | "trapRisk">, keyof ScoredStock> = {
+    final: "finalRiskAdjustedValueScore",
+    value: "valueScore",
+    quality: "qualityScore",
+    upside: "analystUpsidePercent"
+  };
+  const field = fields[sortKey];
+  return Number(b[field]) - Number(a[field]) || byFinal(a, b);
+}
+
 function byFinal(a: ScoredStock, b: ScoredStock): number {
   if (a.hasMetrics === false && b.hasMetrics !== false) return 1;
   if (a.hasMetrics !== false && b.hasMetrics === false) return -1;
@@ -599,6 +732,17 @@ function option(value: string, label: string, selected: string): string {
 
 function summaryCard(label: string, value: string, note: string): string {
   return `<article><span>${label}</span><strong>${value}</strong><small>${note}</small></article>`;
+}
+
+function legendItem(label: string, text: string): string {
+  return `<article><strong>${label}</strong><span>${text}</span></article>`;
+}
+
+function plainScoreMeaning(stock: ScoredStock): string {
+  if (stock.valueTrapRiskScore >= 70) return "Cheap-looking, but the risk score says be careful.";
+  if (stock.finalRiskAdjustedValueScore >= 70) return "Cleaner value idea. Still verify the data before acting.";
+  if (stock.finalRiskAdjustedValueScore >= 50) return "Mixed idea. Useful for research, not an automatic buy.";
+  return "Lower-priority idea unless you have a stronger outside reason.";
 }
 
 function median(values: number[]): number {
