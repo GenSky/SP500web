@@ -3,7 +3,7 @@
       <nav class="topbar" aria-label="Primary navigation">
         <a class="brand" href="#top" aria-label="Gensky Value Picker home">
           <span class="brand-mark">GV</span>
-          <span><strong>Gensky Value Picker</strong><small>Research and paper tracking only</small></span>
+          <span><strong>Gensky Value Picker</strong><small>Research only</small></span>
         </a>
         <div class="top-actions">
           <a href="#best-ideas">Best Ideas</a>
@@ -14,8 +14,8 @@
       <section class="hero" id="top">
         <div>
           <p class="eyebrow">Stock universe</p>
-          <h1>Rank value ideas across Nasdaq-100, S&P 500, custom watchlists, and the combined market list.</h1>
-          <p class="warning">Sample data only. Replace with fresh market data before making real decisions.</p>
+          <h1>Value scanner.</h1>
+          <p class="warning">Research only. Verify data before decisions.</p>
         </div>
         <div class="universe-panel">
           <label for="universe-select">Universe</label>
@@ -47,11 +47,11 @@
       </section>
 
       <section class="section score-summary" aria-label="Score outputs">
-        ${H("Visible rows",t.length.toString(),"Includes scored ideas and needs-data constituents")}
-        ${H("Scored ideas",t.filter(N=>N.hasMetrics!==!1).length.toString(),"Rows with valuation and quality metrics")}
-        ${H("Needs data",i.toString(),"Constituents waiting for CSV/API metrics")}
-        ${H("Top final score",w((m=t.find(N=>N.hasMetrics!==!1))==null?void 0:m.finalRiskAdjustedValueScore),"Ranked by risk-adjusted value")}
-        ${H("Tracked trades",v.length.toString(),"Stored in localStorage with universe")}
+        ${H("Rows",t.length.toString(),"After filters")}
+        ${H("Scored",t.filter(N=>N.hasMetrics!==!1).length.toString(),"With metrics")}
+        ${H("Needs data",i.toString(),"Missing metrics")}
+        ${H("Top score",w((m=t.find(N=>N.hasMetrics!==!1))==null?void 0:m.finalRiskAdjustedValueScore),"Risk-adjusted")}
+        ${H("Tracked",v.length.toString(),"Local paper list")}
       </section>
 
       <section class="section" id="rankings">
@@ -60,7 +60,7 @@
             <p class="eyebrow">Rankings</p>
             <h2>${cr(c.universe)}</h2>
           </div>
-          <p>Default sort: Final Risk-Adjusted Value Score.</p>
+          <p>Sorted by final risk-adjusted value.</p>
         </div>
         <div class="score-key">
           <span>Value Score</span>
@@ -141,37 +141,37 @@
       </table>
     </div>`}function tr(e){return e.hasMetrics===!1?`
       <tr class="needs-data-row">
-        <td><button class="ticker-link" type="button" data-symbol="${e.ticker}"><strong>${e.ticker}</strong><small>${e.companyName}</small></button></td>
-        <td>${ae(e)}</td>
-        <td>${e.sector}<small>${e.industry}</small></td>
-        <td>--</td>
-        <td><span class="status-pill muted">Needs data</span></td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>Needs data</td>
-        <td><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${e.tradeIdea.why}</p></details></td>
-        <td><button type="button" disabled>Needs data</button></td>
+        <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${e.ticker}"><strong>${e.ticker}</strong><small>${e.companyName}</small></button></td>
+        <td data-label="Universe">${ae(e)}</td>
+        <td data-label="Sector">${e.sector}<small>${e.industry}</small></td>
+        <td data-label="Price">--</td>
+        <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
+        <td data-label="Value">--</td>
+        <td data-label="Quality">--</td>
+        <td data-label="Balance">--</td>
+        <td data-label="Growth">--</td>
+        <td data-label="Momentum">--</td>
+        <td data-label="Trap risk">--</td>
+        <td data-label="Category">Needs data</td>
+        <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${e.tradeIdea.why}</p></details></td>
+        <td data-label="Track"><button type="button" disabled>Needs data</button></td>
       </tr>
     `:`
     <tr>
-      <td><button class="ticker-link" type="button" data-symbol="${e.ticker}"><strong>${e.ticker}</strong><small>${e.companyName}</small></button></td>
-      <td>${ae(e)}</td>
-      <td>${e.sector}<small>${e.industry}</small></td>
-      <td>${oe(e.price)}</td>
-      <td><span class="score-pill ${ur(e.finalRiskAdjustedValueScore)}">${w(e.finalRiskAdjustedValueScore)}</span></td>
-      <td>${w(e.valueScore)}</td>
-      <td>${w(e.qualityScore)}</td>
-      <td>${w(e.balanceSheetScore)}</td>
-      <td>${w(e.growthScore)}</td>
-      <td>${w(e.momentumSetupScore)}</td>
-      <td><span class="risk ${br(e.valueTrapRiskScore)}">${w(e.valueTrapRiskScore)}</span></td>
-      <td>${e.category}</td>
-      <td><strong>${e.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${e.tradeIdea.why}</p></details></td>
-      <td><button type="button" data-track="${e.ticker}">Track</button></td>
+      <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${e.ticker}"><strong>${e.ticker}</strong><small>${e.companyName}</small></button></td>
+      <td data-label="Universe">${ae(e)}</td>
+      <td data-label="Sector">${e.sector}<small>${e.industry}</small></td>
+      <td data-label="Price">${oe(e.price)}</td>
+      <td data-label="Final score"><span class="score-pill ${ur(e.finalRiskAdjustedValueScore)}">${w(e.finalRiskAdjustedValueScore)}</span></td>
+      <td data-label="Value">${w(e.valueScore)}</td>
+      <td data-label="Quality">${w(e.qualityScore)}</td>
+      <td data-label="Balance">${w(e.balanceSheetScore)}</td>
+      <td data-label="Growth">${w(e.growthScore)}</td>
+      <td data-label="Momentum">${w(e.momentumSetupScore)}</td>
+      <td data-label="Trap risk"><span class="risk ${br(e.valueTrapRiskScore)}">${w(e.valueTrapRiskScore)}</span></td>
+      <td data-label="Category">${e.category}</td>
+      <td data-label="Trade"><strong>${e.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${e.tradeIdea.why}</p></details></td>
+      <td data-label="Track"><button type="button" data-track="${e.ticker}">Track</button></td>
     </tr>
   `}async function ar(e){var m;(m=document.querySelector("[data-chart-modal]"))==null||m.remove();const{freeChartData:r}=await Ge(async()=>{const{freeChartData:N}=await import("./freeChartData-CwVuCuoa.js");return{freeChartData:N}},[]),a=r[e.ticker]??[];document.body.insertAdjacentHTML("beforeend",`
     <div class="chart-modal" data-chart-modal role="dialog" aria-modal="true" aria-label="${P(e.ticker)} chart">
@@ -234,5 +234,5 @@
         <button type="button" data-remove-trade="${e.id}">Remove</button>
       </article>
     `).join("")}
-  </div>`}function sr(e){const r=new Map;return e.forEach(a=>{const t=r.get(a.sector)??[];t.push(a),r.set(a.sector,t)}),Array.from(r.entries()).sort(([a],[t])=>a.localeCompare(t)).map(([a,t])=>{const i=t.sort(L)[0];return`<article><small>${a}</small><strong>${i.ticker}</strong><span>${i.companyName}</span><b>${w(i.finalRiskAdjustedValueScore)}</b></article>`}).join("")}function G(e,r){return`<article class="idea-card"><h3>${e}</h3>${r.length?`<ol>${r.map(a=>`<li><span>${a.ticker}</span><strong>${w(a.finalRiskAdjustedValueScore)}</strong><small>${a.category}</small></li>`).join("")}</ol>`:"<p>No ideas match.</p>"}</article>`}function be(e,r){return B(e,r).sort(L).slice(0,5)}function L(e,r){return e.hasMetrics===!1&&r.hasMetrics!==!1?1:e.hasMetrics!==!1&&r.hasMetrics===!1?-1:r.finalRiskAdjustedValueScore-e.finalRiskAdjustedValueScore||e.ticker.localeCompare(r.ticker)}function nr(e,r){return r==="CUSTOM"?"CUSTOM":r==="SP500"&&e.indexMembership.includes("SP500")?"SP500":r==="NASDAQ_100"&&e.indexMembership.includes("NASDAQ_100")||e.indexMembership.includes("NASDAQ_100")?"NASDAQ_100":e.indexMembership.includes("SP500")?"SP500":"CUSTOM"}function mr(e,r){const a=new Map(e.map(t=>[t.ticker,t]));return r.forEach(t=>a.set(t.ticker,t)),Array.from(a.values())}function de(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(t.target.value))}function X(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(Number(t.target.value)||0))}function le(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(t.target.checked))}function cr(e){return{NASDAQ_100:"Top undervalued Nasdaq-100 stocks.",SP500:"Top undervalued S&P 500 stocks.",CUSTOM:"Top undervalued custom watchlist stocks.",ALL:"Top undervalued stocks overall."}[e]}function A(e,r,a){return`<option value="${e}" ${e===a?"selected":""}>${r}</option>`}function H(e,r,a){return`<article><span>${e}</span><strong>${r}</strong><small>${a}</small></article>`}function ur(e){return e>=72?"good":e>=52?"ok":"bad"}function br(e){return e>=70?"bad":e>=45?"ok":"good"}function w(e){return Number.isFinite(e)?String(Math.round(Number(e))):"--"}function R(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{maximumFractionDigits:2}).format(e):"--"}function dr(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{notation:"compact",maximumFractionDigits:2}).format(e):"--"}function K(e){return Math.round(e*10)/10}function P(e){return e.replace(/[&<>"]/g,r=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[r]??r)}function oe(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{style:"currency",currency:"USD",maximumFractionDigits:2}).format(e):"--"}
-//# sourceMappingURL=index-B4V5efBM.js.map
+  </div>`}function sr(e){const r=new Map;return e.forEach(a=>{const t=r.get(a.sector)??[];t.push(a),r.set(a.sector,t)}),Array.from(r.entries()).sort(([a],[t])=>a.localeCompare(t)).map(([a,t])=>{const i=t.sort(L)[0];return`<article><small>${a}</small><strong>${i.ticker}</strong><span>${i.companyName}</span><b>${w(i.finalRiskAdjustedValueScore)}</b></article>`}).join("")}function G(e,r){return`<article class="idea-card"><h3>${e}</h3>${r.length?`<ol>${r.map(a=>`<li><span>${a.ticker}</span><strong>${w(a.finalRiskAdjustedValueScore)}</strong><small>${a.category}</small></li>`).join("")}</ol>`:"<p>No ideas match.</p>"}</article>`}function be(e,r){return B(e,r).sort(L).slice(0,5)}function L(e,r){return e.hasMetrics===!1&&r.hasMetrics!==!1?1:e.hasMetrics!==!1&&r.hasMetrics===!1?-1:r.finalRiskAdjustedValueScore-e.finalRiskAdjustedValueScore||e.ticker.localeCompare(r.ticker)}function nr(e,r){return r==="CUSTOM"?"CUSTOM":r==="SP500"&&e.indexMembership.includes("SP500")?"SP500":r==="NASDAQ_100"&&e.indexMembership.includes("NASDAQ_100")||e.indexMembership.includes("NASDAQ_100")?"NASDAQ_100":e.indexMembership.includes("SP500")?"SP500":"CUSTOM"}function mr(e,r){const a=new Map(e.map(t=>[t.ticker,t]));return r.forEach(t=>a.set(t.ticker,t)),Array.from(a.values())}function de(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(t.target.value))}function X(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(Number(t.target.value)||0))}function le(e,r){var a;(a=document.querySelector(`#${e}`))==null||a.addEventListener("change",t=>r(t.target.checked))}function cr(e){return{NASDAQ_100:"Nasdaq-100 value list",SP500:"S&P 500 value list",CUSTOM:"Custom watchlist value list",ALL:"Combined value list"}[e]}function A(e,r,a){return`<option value="${e}" ${e===a?"selected":""}>${r}</option>`}function H(e,r,a){return`<article><span>${e}</span><strong>${r}</strong><small>${a}</small></article>`}function ur(e){return e>=72?"good":e>=52?"ok":"bad"}function br(e){return e>=70?"bad":e>=45?"ok":"good"}function w(e){return Number.isFinite(e)?String(Math.round(Number(e))):"--"}function R(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{maximumFractionDigits:2}).format(e):"--"}function dr(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{notation:"compact",maximumFractionDigits:2}).format(e):"--"}function K(e){return Math.round(e*10)/10}function P(e){return e.replace(/[&<>"]/g,r=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[r]??r)}function oe(e){return Number.isFinite(e)?new Intl.NumberFormat(void 0,{style:"currency",currency:"USD",maximumFractionDigits:2}).format(e):"--"}
+//# sourceMappingURL=index-DgXo-ppD.js.map
