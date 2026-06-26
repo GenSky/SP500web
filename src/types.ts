@@ -25,6 +25,7 @@ export interface StockMetric {
   momentumScore: number;
   qualityScore: number;
   notes: string;
+  hasMetrics?: boolean;
 }
 
 export interface ScoreBreakdown {
@@ -52,14 +53,15 @@ export type ValueCategory =
   | "Quality value"
   | "Deep value"
   | "Turnaround"
-  | "Avoid / possible trap";
+  | "Avoid / possible trap"
+  | "Needs data";
 
 export interface ScoredStock extends StockMetric, ScoreBreakdown {
   tradeIdea: TradeIdea;
 }
 
 export interface TradeIdea {
-  action: "Long shares / LEAPS" | "Cash-secured put" | "Bull call spread" | "Watchlist only" | "Avoid";
+  action: "Long shares / LEAPS" | "Cash-secured put" | "Bull call spread" | "Watchlist only" | "Avoid" | "Needs data";
   why: string;
 }
 

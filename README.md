@@ -7,7 +7,7 @@ A research-only stock value dashboard for ranking ideas across multiple universe
 - Custom Watchlist
 - All Stocks Combined
 
-The app ranks sample stock metrics with a risk-adjusted value model, suggests paper trade structures, and stores tracked ideas in `localStorage`.
+The app includes full Nasdaq-100 and S&P 500 constituent coverage, ranks stocks with sample or imported metrics, suggests paper trade structures, and stores tracked ideas in `localStorage`.
 
 > Sample data only. Replace with fresh market data before making real decisions.
 
@@ -33,12 +33,15 @@ npm run build
 
 ## Data
 
-Current app data is sample-only TypeScript data:
+Current app data combines full public index constituent lists with sample metric data:
 
+- `src/data/indexConstituents.ts`
 - `src/data/sampleNasdaqStocks.ts`
 - `src/data/sampleSp500Stocks.ts`
 
-The S&P 500 sample file includes 50+ S&P 500-style stocks across Technology, Communication Services, Consumer Discretionary, Consumer Staples, Financials, Healthcare, Industrials, Energy, Utilities, Real Estate, and Materials.
+The constituent file covers the full Nasdaq-100 and S&P 500 security rows used by the selector. Stocks without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are shown as `Needs data` and are excluded from rankings until sample, CSV, or future API data supplies those fields.
+
+The S&P 500 sample metrics file includes 50+ S&P 500-style stocks across Technology, Communication Services, Consumer Discretionary, Consumer Staples, Financials, Healthcare, Industrials, Energy, Utilities, Real Estate, and Materials.
 
 Future data-source options are documented in `docs/data-source-plan.md`.
 

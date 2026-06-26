@@ -24,7 +24,7 @@ let filters: FilterState = {
   positiveFcfOnly: false,
   minAnalystUpside: 0,
   minDrawdown: 0,
-  avoidValueTraps: true
+  avoidValueTraps: false
 };
 
 render();
@@ -32,7 +32,9 @@ render();
 function render(): void {
   const allStocks = mergeStocks(customStocks);
   const scored = scoreAll(allStocks);
-  const visible = applyFilters(scored, filters).sort((a, b) => b.finalRiskAdjustedValueScore - a.finalRiskAdjustedValueScore);
+  const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
+  const visible = applyFilters(scored, filters).sort(byFinal);
+  const needsDataCount = visible.filter((stock) => stock.hasMetrics === false).length;
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
 
   app.innerHTML = `
@@ -84,9 +86,10 @@ function render(): void {
       </section>
 
       <section class="section score-summary" aria-label="Score outputs">
-        ${summaryCard("Visible ideas", visible.length.toString(), "After universe and filter rules")}
-        ${summaryCard("Top final score", formatScore(visible[0]?.finalRiskAdjustedValueScore), "Ranked by risk-adjusted value")}
-        ${summaryCard("Median trap risk", formatScore(median(visible.map((stock) => stock.valueTrapRiskScore))), "0 is lower risk, 100 is highest")}
+        ${summaryCard("Visible rows", visible.length.toString(), "Includes scored ideas and needs-data constituents")}
+        ${summaryCard("Scored ideas", visible.filter((stock) => stock.hasMetrics !== false).length.toString(), "Rows with valuation and quality metrics")}
+        ${summaryCard("Needs data", needsDataCount.toString(), "Constituents waiting for CSV/API metrics")}
+        ${summaryCard("Top final score", formatScore(visible.find((stock) => stock.hasMetrics !== false)?.finalRiskAdjustedValueScore), "Ranked by risk-adjusted value")}
         ${summaryCard("Tracked trades", trackedTrades.length.toString(), "Stored in localStorage with universe")}
       </section>
 
@@ -118,12 +121,12 @@ function render(): void {
           </div>
         </div>
         <div class="idea-grid">
-          ${ideaList("Best Nasdaq-100 ideas", topIdeas(scored, "NASDAQ_100"))}
-          ${ideaList("Best S&P 500 ideas", topIdeas(scored, "SP500"))}
-          ${ideaList("Best overall ideas", scored.slice().sort(byFinal).slice(0, 5))}
-          ${ideaList("Safest value ideas", scored.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
-          ${ideaList("Highest upside risky ideas", scored.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
-          ${ideaList("Avoid list / value traps", scored.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
+          ${ideaList("Best Nasdaq-100 ideas", topIdeas(metricStocks, "NASDAQ_100"))}
+          ${ideaList("Best S&P 500 ideas", topIdeas(metricStocks, "SP500"))}
+          ${ideaList("Best overall ideas", metricStocks.slice().sort(byFinal).slice(0, 5))}
+          ${ideaList("Safest value ideas", metricStocks.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
+          ${ideaList("Highest upside risky ideas", metricStocks.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
+          ${ideaList("Avoid list / value traps", metricStocks.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
         </div>
       </section>
 
@@ -134,7 +137,7 @@ function render(): void {
             <h2>Top undervalued stocks by sector.</h2>
           </div>
         </div>
-        <div class="sector-grid">${renderSectorLeaders(scored)}</div>
+        <div class="sector-grid">${renderSectorLeaders(metricStocks)}</div>
       </section>
 
       <section class="section" id="tracker">
@@ -170,21 +173,60 @@ function render(): void {
 
 function scoreAll(stocks: StockMetric[]): ScoredStock[] {
   return stocks.map((stock) => {
+    if (stock.hasMetrics === false) {
+      return {
+        ...stock,
+        valueScore: 0,
+        qualityScore: 0,
+        balanceSheetScore: 0,
+        growthScore: 0,
+        momentumSetupScore: 0,
+        valueTrapRiskScore: 0,
+        finalRiskAdjustedValueScore: 0,
+        debtRisk: 0,
+        category: "Needs data",
+        penalties: {
+          highDebtPenalty: 0,
+          negativeFreeCashFlowPenalty: 0,
+          decliningRevenuePenalty: 0,
+          weakEarningsGrowthPenalty: 0,
+          valueTrapPenalty: 0,
+          cyclicalBusinessPenalty: 0
+        },
+        tradeIdea: {
+          action: "Needs data",
+          why: "This ticker is in the selected index universe, but it does not have valuation, growth, balance sheet, free cash flow, momentum, or analyst metrics yet. Import fresh data before ranking or tracking it."
+        }
+      };
+    }
+
     const scores = scoreStock(stock);
-    const scored: ScoredStock = { ...stock, ...scores, tradeIdea: { action: "Watchlist only", why: "" } };
+    const scored: ScoredStock = { ...stock, hasMetrics: true, ...scores, tradeIdea: { action: "Watchlist only", why: "" } };
     return { ...scored, tradeIdea: pickTrade(scored) };
   });
 }
 
 function applyFilters(stocks: ScoredStock[], filterState: FilterState): ScoredStock[] {
+  const metricFiltersActive =
+    filterState.minValueScore > 0 ||
+    filterState.maxDebtRisk < 100 ||
+    filterState.positiveFcfOnly ||
+    filterState.minAnalystUpside > 0 ||
+    filterState.minDrawdown > 0;
+
   return filterByUniverse(stocks, filterState.universe)
     .filter((stock) => filterState.sector === "All" || stock.sector === filterState.sector)
-    .filter((stock) => stock.valueScore >= filterState.minValueScore)
-    .filter((stock) => stock.debtRisk <= filterState.maxDebtRisk)
-    .filter((stock) => !filterState.positiveFcfOnly || stock.freeCashFlowYield > 0)
-    .filter((stock) => stock.analystUpsidePercent >= filterState.minAnalystUpside)
-    .filter((stock) => stock.oneYearDrawdownPercent >= filterState.minDrawdown)
-    .filter((stock) => !filterState.avoidValueTraps || stock.valueTrapRiskScore < 70);
+    .filter((stock) => {
+      if (stock.hasMetrics === false) {
+        return !metricFiltersActive;
+      }
+      return stock.valueScore >= filterState.minValueScore;
+    })
+    .filter((stock) => stock.hasMetrics === false || stock.debtRisk <= filterState.maxDebtRisk)
+    .filter((stock) => stock.hasMetrics === false || !filterState.positiveFcfOnly || stock.freeCashFlowYield > 0)
+    .filter((stock) => stock.hasMetrics === false || stock.analystUpsidePercent >= filterState.minAnalystUpside)
+    .filter((stock) => stock.hasMetrics === false || stock.oneYearDrawdownPercent >= filterState.minDrawdown)
+    .filter((stock) => stock.hasMetrics === false || !filterState.avoidValueTraps || stock.valueTrapRiskScore < 70);
 }
 
 function bindEvents(scored: ScoredStock[]): void {
@@ -265,27 +307,52 @@ function renderTable(stocks: ScoredStock[]): string {
           </tr>
         </thead>
         <tbody>
-          ${stocks.map((stock) => `
-            <tr>
-              <td><strong>${stock.ticker}</strong><small>${stock.companyName}</small></td>
-              <td>${displayUniverse(stock)}</td>
-              <td>${stock.sector}<small>${stock.industry}</small></td>
-              <td>${currency(stock.price)}</td>
-              <td><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
-              <td>${formatScore(stock.valueScore)}</td>
-              <td>${formatScore(stock.qualityScore)}</td>
-              <td>${formatScore(stock.balanceSheetScore)}</td>
-              <td>${formatScore(stock.growthScore)}</td>
-              <td>${formatScore(stock.momentumSetupScore)}</td>
-              <td><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
-              <td>${stock.category}</td>
-              <td><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
-              <td><button type="button" data-track="${stock.ticker}">Track</button></td>
-            </tr>
-          `).join("")}
+          ${stocks.map(renderStockRow).join("")}
         </tbody>
       </table>
     </div>`;
+}
+
+function renderStockRow(stock: ScoredStock): string {
+  if (stock.hasMetrics === false) {
+    return `
+      <tr class="needs-data-row">
+        <td><strong>${stock.ticker}</strong><small>${stock.companyName}</small></td>
+        <td>${displayUniverse(stock)}</td>
+        <td>${stock.sector}<small>${stock.industry}</small></td>
+        <td>--</td>
+        <td><span class="status-pill muted">Needs data</span></td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>--</td>
+        <td>Needs data</td>
+        <td><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+        <td><button type="button" disabled>Needs data</button></td>
+      </tr>
+    `;
+  }
+
+  return `
+    <tr>
+      <td><strong>${stock.ticker}</strong><small>${stock.companyName}</small></td>
+      <td>${displayUniverse(stock)}</td>
+      <td>${stock.sector}<small>${stock.industry}</small></td>
+      <td>${currency(stock.price)}</td>
+      <td><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
+      <td>${formatScore(stock.valueScore)}</td>
+      <td>${formatScore(stock.qualityScore)}</td>
+      <td>${formatScore(stock.balanceSheetScore)}</td>
+      <td>${formatScore(stock.growthScore)}</td>
+      <td>${formatScore(stock.momentumSetupScore)}</td>
+      <td><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
+      <td>${stock.category}</td>
+      <td><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+      <td><button type="button" data-track="${stock.ticker}">Track</button></td>
+    </tr>
+  `;
 }
 
 function renderTracker(): string {
@@ -328,7 +395,9 @@ function topIdeas(stocks: ScoredStock[], universe: StockUniverse): ScoredStock[]
 }
 
 function byFinal(a: ScoredStock, b: ScoredStock): number {
-  return b.finalRiskAdjustedValueScore - a.finalRiskAdjustedValueScore;
+  if (a.hasMetrics === false && b.hasMetrics !== false) return 1;
+  if (a.hasMetrics !== false && b.hasMetrics === false) return -1;
+  return b.finalRiskAdjustedValueScore - a.finalRiskAdjustedValueScore || a.ticker.localeCompare(b.ticker);
 }
 
 function trackerUniverse(stock: ScoredStock, currentUniverse: StockUniverse): TradeUniverse {
@@ -399,5 +468,6 @@ function formatScore(value: number | undefined): string {
 }
 
 function currency(value: number): string {
+  if (!Number.isFinite(value)) return "--";
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
 }

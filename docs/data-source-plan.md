@@ -4,7 +4,7 @@ S&P500web is research, idea generation, and paper tracking only. This version do
 
 ## Current Version
 
-The app uses typed sample data for Nasdaq-100, S&P 500, and user-imported custom watchlists. The UI includes this warning: "Sample data only. Replace with fresh market data before making real decisions."
+The app uses full public Nasdaq-100 and S&P 500 constituent lists, typed sample metrics, and user-imported custom watchlists. Constituent rows without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are visible as "Needs data" and are not scored until fresh data is imported. The UI includes this warning: "Sample data only. Replace with fresh market data before making real decisions."
 
 ## Future Data Options
 

@@ -80,7 +80,8 @@ export function parseCsvWatchlist(text: string): CsvImportResult {
       oneYearDrawdownPercent: numberValue(row.oneYearDrawdownPercent, 12),
       momentumScore: numberValue(row.momentumScore, 50),
       qualityScore: numberValue(row.qualityScore, 55),
-      notes: stringValue(row.notes, "Imported CSV watchlist stock")
+      notes: stringValue(row.notes, "Imported CSV watchlist stock"),
+      hasMetrics: true
     });
   });
 
