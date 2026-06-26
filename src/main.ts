@@ -20,6 +20,7 @@ type SortKey = "final" | "value" | "quality" | "trapRisk" | "upside" | "ticker";
 
 let viewMode: ViewMode = "cards";
 let sortKey: SortKey = "final";
+let trackMessage = "";
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
 let filters: FilterState = {
@@ -115,6 +116,7 @@ function render(): void {
         ${summaryCard("Top score", formatScore(visible.find((stock) => stock.hasMetrics !== false)?.finalRiskAdjustedValueScore), "Risk-adjusted")}
         ${summaryCard("Tracked", trackedTrades.length.toString(), "Local paper list")}
       </section>
+      ${renderTrackMessage()}
 
       <section class="section best-ideas" id="best-ideas">
         <div class="section-heading">
@@ -299,8 +301,13 @@ function bindEvents(scored: ScoredStock[]): void {
     button.addEventListener("click", () => {
       const stock = scored.find((item) => item.ticker === button.dataset.track);
       if (!stock) return;
+      if (isTracked(stock.ticker)) {
+        trackMessage = `${stock.ticker} is already in your paper tracker.`;
+        render();
+        return;
+      }
       const universe = trackerUniverse(stock, filters.universe);
-      trackedTrades = [
+      const nextTrades: TrackerEntry[] = [
         {
           id: `${stock.ticker}-${Date.now()}`,
           ticker: stock.ticker,
@@ -315,15 +322,26 @@ function bindEvents(scored: ScoredStock[]): void {
         },
         ...trackedTrades
       ];
-      saveTrackedTrades(trackedTrades);
+      try {
+        saveTrackedTrades(nextTrades);
+        trackedTrades = nextTrades;
+        trackMessage = `Added ${stock.ticker} to your paper tracker.`;
+      } catch {
+        trackMessage = `Could not save ${stock.ticker}. Browser storage may be blocked.`;
+      }
       render();
     });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-jump-tracker]").forEach((button) => {
+    button.addEventListener("click", () => document.querySelector("#tracker")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   });
 
   document.querySelectorAll<HTMLButtonElement>("[data-remove-trade]").forEach((button) => {
     button.addEventListener("click", () => {
       trackedTrades = trackedTrades.filter((entry) => entry.id !== button.dataset.removeTrade);
       saveTrackedTrades(trackedTrades);
+      trackMessage = "";
       render();
     });
   });
@@ -432,7 +450,7 @@ function renderStockCard(stock: ScoredStock): string {
         <span>${escapeHtml(companySnippet(stock))}</span>
       </div>
       <div class="stock-card-trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
-      <button type="button" data-track="${stock.ticker}">Track</button>
+      ${trackButton(stock)}
     </article>
   `;
 }
@@ -472,7 +490,7 @@ function renderStockRow(stock: ScoredStock): string {
       <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
       <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
       <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
-      <td data-label="Track"><button type="button" data-track="${stock.ticker}">Track</button></td>
+      <td data-label="Track">${trackButton(stock)}</td>
     </tr>
   `;
 }
@@ -643,6 +661,11 @@ function renderTracker(): string {
   </div>`;
 }
 
+function renderTrackMessage(): string {
+  if (!trackMessage) return "";
+  return `<section class="section track-message" role="status"><span>${escapeHtml(trackMessage)}</span><a href="#tracker">View tracker</a></section>`;
+}
+
 function renderSectorLeaders(stocks: ScoredStock[]): string {
   const bySector = new Map<string, ScoredStock[]>();
   stocks.forEach((stock) => {
@@ -683,6 +706,17 @@ function byFinal(a: ScoredStock, b: ScoredStock): number {
   if (a.hasMetrics === false && b.hasMetrics !== false) return 1;
   if (a.hasMetrics !== false && b.hasMetrics === false) return -1;
   return b.finalRiskAdjustedValueScore - a.finalRiskAdjustedValueScore || a.ticker.localeCompare(b.ticker);
+}
+
+function isTracked(ticker: string): boolean {
+  return trackedTrades.some((entry) => entry.ticker === ticker);
+}
+
+function trackButton(stock: ScoredStock): string {
+  if (isTracked(stock.ticker)) {
+    return `<button class="tracked-action" type="button" data-jump-tracker>Tracked</button>`;
+  }
+  return `<button type="button" data-track="${stock.ticker}">Track</button>`;
 }
 
 function trackerUniverse(stock: ScoredStock, currentUniverse: StockUniverse): TradeUniverse {

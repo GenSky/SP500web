@@ -816,3 +816,36 @@ th { background: #dbeafe; }
 }
 
 .section { scroll-margin-top: 92px; }
+
+/* Track feedback overrides */
+.track-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -12px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border: 3px solid var(--border);
+  background: #bdebd6;
+  font-weight: 850;
+}
+
+.track-message a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: .16em;
+  white-space: nowrap;
+}
+
+.tracked-action {
+  background: #bdebd6;
+}
+
+@media (max-width: 700px) {
+  .track-message {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
