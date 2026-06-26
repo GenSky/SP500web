@@ -1065,3 +1065,109 @@ th { background: #dbeafe; }
     padding-bottom: 6px;
   }
 }
+
+/* Real mobile table view overrides */
+.sort-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none !important;
+  text-align: left;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font-size: inherit;
+  font-weight: 900;
+}
+
+.sort-heading:hover,
+.sort-heading.active {
+  background: transparent;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: .14em;
+}
+
+@media (max-width: 700px) {
+  .table-wrap {
+    overflow-x: auto;
+    border: 3px solid var(--border);
+    background: var(--panel);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table {
+    display: table;
+    width: max-content;
+    min-width: 1180px;
+    border-collapse: collapse;
+  }
+
+  .table-wrap thead {
+    display: table-header-group;
+  }
+
+  .table-wrap tbody {
+    display: table-row-group;
+  }
+
+  .table-wrap tr {
+    display: table-row;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .table-wrap th,
+  .table-wrap td {
+    display: table-cell;
+    padding: 10px 9px;
+    border-bottom: 2px solid color-mix(in srgb, var(--border) 30%, transparent);
+    vertical-align: top;
+    font-size: .82rem;
+  }
+
+  .table-wrap th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #dbeafe;
+  }
+
+  .table-wrap td::before {
+    display: none;
+    content: none;
+  }
+
+  .table-wrap td:nth-child(1),
+  .table-wrap td:nth-child(5),
+  .table-wrap td:nth-child(6),
+  .table-wrap td:nth-child(7),
+  .table-wrap td:nth-child(8),
+  .table-wrap td:nth-child(9),
+  .table-wrap td:nth-child(11),
+  .table-wrap td:nth-child(12),
+  .table-wrap td:nth-child(13) {
+    display: table-cell;
+  }
+
+  .table-wrap .ticker-link strong {
+    font-size: .95rem;
+  }
+
+  .table-wrap details {
+    max-width: 220px;
+  }
+
+  .table-wrap button:not(.ticker-link):not(.sort-heading) {
+    min-height: 32px;
+    padding: 5px 8px;
+  }
+}

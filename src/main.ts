@@ -16,7 +16,7 @@ if (!appRoot) {
 const app = appRoot;
 
 type ViewMode = "cards" | "table";
-type SortKey = "final" | "value" | "quality" | "trapRisk" | "upside" | "ticker";
+type SortKey = "final" | "value" | "quality" | "balance" | "growth" | "momentum" | "trapRisk" | "upside" | "ticker" | "price" | "trade";
 
 let viewMode: ViewMode = "cards";
 let sortKey: SortKey = "final";
@@ -102,9 +102,13 @@ function render(): void {
               ${option("final", "Best overall score", sortKey)}
               ${option("value", "Cheapest valuation", sortKey)}
               ${option("quality", "Highest quality", sortKey)}
+              ${option("balance", "Best balance sheet", sortKey)}
+              ${option("growth", "Best growth", sortKey)}
+              ${option("momentum", "Best momentum", sortKey)}
               ${option("trapRisk", "Lowest trap risk", sortKey)}
               ${option("upside", "Highest analyst upside", sortKey)}
               ${option("ticker", "Ticker A to Z", sortKey)}
+              ${option("trade", "Trade type A to Z", sortKey)}
             </select>
           </label>
         </div>
@@ -249,6 +253,13 @@ function bindEvents(scored: ScoredStock[]): void {
   bindCheckbox("positive-fcf", (value) => { filters = { ...filters, positiveFcfOnly: value }; render(); });
   bindCheckbox("avoid-traps", (value) => { filters = { ...filters, avoidValueTraps: value }; render(); });
   bindSelect("sort-select", (value) => { sortKey = value as SortKey; render(); });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-sort-key]").forEach((button) => {
+    button.addEventListener("click", () => {
+      sortKey = button.dataset.sortKey as SortKey;
+      render();
+    });
+  });
 
   const runTickerSearch = () => searchTicker(scored);
   document.querySelector<HTMLButtonElement>("#ticker-search-button")?.addEventListener("click", runTickerSearch);
@@ -437,7 +448,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            <th>Ticker</th><th>Sector</th><th>Price</th><th>Final Risk-Adjusted Value Score</th><th>Value Score</th><th>Quality Score</th><th>Balance Sheet Score</th><th>Growth Score</th><th>Momentum Setup Score</th><th>Value Trap Risk Score</th><th>What it does</th><th>AI Trade Picker</th><th></th>
+            ${tableHeader("Ticker", "ticker")}<th>Sector</th>${tableHeader("Price", "price")}${tableHeader("Final Score", "final")}${tableHeader("Value", "value")}${tableHeader("Quality", "quality")}${tableHeader("Balance", "balance")}${tableHeader("Growth", "growth")}${tableHeader("Momentum", "momentum")}${tableHeader("Trap Risk", "trapRisk")}<th>What it does</th>${tableHeader("Trade", "trade")}<th>Track</th>
           </tr>
         </thead>
         <tbody>
@@ -445,6 +456,13 @@ function renderTable(stocks: ScoredStock[]): string {
         </tbody>
       </table>
     </div>`;
+}
+
+function tableHeader(label: string, key: SortKey): string {
+  const active = sortKey === key;
+  const direction = key === "ticker" || key === "trapRisk" || key === "trade" ? "ascending" : "descending";
+  const arrow = active ? (direction === "ascending" ? " ↑" : " ↓") : "";
+  return `<th><button class="sort-heading ${active ? "active" : ""}" type="button" data-sort-key="${key}" aria-sort="${active ? direction : "none"}">${escapeHtml(label)}${arrow}</button></th>`;
 }
 
 function renderStockCard(stock: ScoredStock): string {
@@ -735,11 +753,16 @@ function bySelectedSort(a: ScoredStock, b: ScoredStock): number {
   if (a.hasMetrics !== false && b.hasMetrics === false) return -1;
   if (sortKey === "ticker") return a.ticker.localeCompare(b.ticker);
   if (sortKey === "trapRisk") return a.valueTrapRiskScore - b.valueTrapRiskScore || byFinal(a, b);
-  const fields: Record<Exclude<SortKey, "ticker" | "trapRisk">, keyof ScoredStock> = {
+  if (sortKey === "trade") return a.tradeIdea.action.localeCompare(b.tradeIdea.action) || byFinal(a, b);
+  const fields: Record<Exclude<SortKey, "ticker" | "trapRisk" | "trade">, keyof ScoredStock> = {
     final: "finalRiskAdjustedValueScore",
     value: "valueScore",
     quality: "qualityScore",
-    upside: "analystUpsidePercent"
+    balance: "balanceSheetScore",
+    growth: "growthScore",
+    momentum: "momentumSetupScore",
+    upside: "analystUpsidePercent",
+    price: "price"
   };
   const field = fields[sortKey];
   return Number(b[field]) - Number(a[field]) || byFinal(a, b);
