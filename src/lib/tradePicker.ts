@@ -1,4 +1,4 @@
-import type { ScoredStock, TradeIdea } from "../types";
+﻿import type { ScoredStock, TradeIdea } from "../types";
 
 export function pickTrade(stock: ScoredStock): TradeIdea {
   const isSp500 = stock.indexMembership.includes("SP500");
@@ -35,55 +35,57 @@ export function pickTrade(stock: ScoredStock): TradeIdea {
 }
 
 function buildWhy(stock: ScoredStock, action: TradeIdea["action"]): string {
-  return [
-    actionSummary(action),
+  const scoreLine = `Final ${score(stock.finalRiskAdjustedValueScore)}/100 | value ${score(stock.valueScore)}/100 | trap risk ${score(stock.valueTrapRiskScore)}/100.`;
+  const reasonLine = [
+    actionRead(action),
     valueRead(stock),
     balanceRead(stock),
-    growthRead(stock),
     cashFlowRead(stock),
-    riskRead(stock)
-  ].join("\n");
+    growthMomentumRead(stock)
+  ].join(" ");
+  return `${scoreLine}\n${reasonLine}`;
 }
 
-function actionSummary(action: TradeIdea["action"]): string {
-  const summaries: Record<TradeIdea["action"], string> = {
-    "Long shares / LEAPS": "The setup looks strong enough to consider owning shares or a longer-term call option, after you verify the current data.",
-    "Cash-secured put": "This may be better as a patient entry idea: only sell a put if you would be happy owning the stock at a lower price.",
-    "Bull call spread": "There may be upside, but the stock is not screaming cheap, so a defined-risk bullish option idea fits better than chasing.",
-    "Watchlist only": "Not a buy signal yet. Keep it on the list and wait for a cleaner setup.",
-    Avoid: "Skip it for now. The cheap-looking price may be hiding bigger problems.",
-    "Needs data": "No trade idea yet because this ticker needs fresh valuation, growth, debt, cash-flow, and momentum data."
+function actionRead(action: TradeIdea["action"]): string {
+  const reads: Record<TradeIdea["action"], string> = {
+    "Long shares / LEAPS": "Strong enough to study as a long-term buy idea.",
+    "Cash-secured put": "Interesting, but a lower entry price would be better.",
+    "Bull call spread": "Upside is possible, but keep risk defined.",
+    "Watchlist only": "Not a buy signal yet.",
+    Avoid: "Skip it for now.",
+    "Needs data": "Needs fresh data before ranking."
   };
-  return summaries[action];
+  return reads[action];
 }
 
 function valueRead(stock: ScoredStock): string {
-  if (stock.valueScore >= 70) return "Valuation: Looks cheap versus its earnings or cash flow.";
-  if (stock.valueScore >= 45) return "Valuation: Looks mixed, not clearly cheap or expensive.";
-  return "Valuation: Does not look cheap enough yet.";
+  if (stock.valueScore >= 70) return `Valuation looks cheap: forward P/E ${number(stock.forwardPE)}, FCF yield ${number(stock.freeCashFlowYield)}%.`;
+  if (stock.valueScore >= 45) return `Valuation is mixed: forward P/E ${number(stock.forwardPE)}, FCF yield ${number(stock.freeCashFlowYield)}%.`;
+  return `Valuation is not cheap yet: forward P/E ${number(stock.forwardPE)}, FCF yield ${number(stock.freeCashFlowYield)}%.`;
 }
 
 function balanceRead(stock: ScoredStock): string {
-  if (stock.debtRisk >= 65 || stock.balanceSheetScore < 45) return "Debt: Balance-sheet risk is high, so be careful.";
-  if (stock.balanceSheetScore >= 70) return "Debt: Balance sheet looks manageable.";
-  return "Debt: Balance sheet is okay, but not a major strength.";
-}
-
-function growthRead(stock: ScoredStock): string {
-  if (stock.revenueGrowthEstimate < 0 || stock.epsGrowthEstimate < 0) return "Growth: Sales or earnings are shrinking, which can turn a cheap stock into a trap.";
-  if (stock.growthScore >= 65) return "Growth: Sales and earnings are still moving in the right direction.";
-  return "Growth: Growth looks slow, so the stock needs another reason to work.";
+  if (stock.debtRisk >= 65 || stock.balanceSheetScore < 45) return `Debt is the main caution: debt/equity ${number(stock.debtToEquity)}.`;
+  return `Debt looks manageable: debt/equity ${number(stock.debtToEquity)}.`;
 }
 
 function cashFlowRead(stock: ScoredStock): string {
-  if (stock.freeCashFlowYield < 0) return "Cash flow: Free cash flow is negative, which is a warning sign.";
-  if (stock.freeCashFlowYield >= 4) return "Cash flow: The business is producing useful free cash flow.";
-  return "Cash flow: Free cash flow is positive but not especially strong.";
+  return stock.freeCashFlowYield >= 0 ? "Cash flow is positive." : "Cash flow is negative.";
 }
 
-function riskRead(stock: ScoredStock): string {
-  if (stock.valueTrapRiskScore >= 70) return "Risk: Trap risk is high. Do more homework before touching it.";
-  if (stock.valueTrapRiskScore >= 40) return "Risk: Some warning signs remain, so size any idea carefully.";
-  if (stock.momentumSetupScore >= 60) return "Risk: Trap risk is low and the price trend is not fighting the idea too much.";
-  return "Risk: Trap risk is low, but the price trend still needs to improve.";
+function growthMomentumRead(stock: ScoredStock): string {
+  const growth = stock.revenueGrowthEstimate >= 0 && stock.epsGrowthEstimate >= 0
+    ? `Growth is positive: revenue ${number(stock.revenueGrowthEstimate)}%, EPS ${number(stock.epsGrowthEstimate)}%.`
+    : `Growth is weak: revenue ${number(stock.revenueGrowthEstimate)}%, EPS ${number(stock.epsGrowthEstimate)}%.`;
+  const momentum = stock.momentumSetupScore >= 55 ? "Momentum is okay." : "Momentum still needs work.";
+  return `${growth} ${momentum}`;
+}
+
+function score(value: number): string {
+  return Math.round(value).toString();
+}
+
+function number(value: number): string {
+  if (!Number.isFinite(value)) return "n/a";
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
 }

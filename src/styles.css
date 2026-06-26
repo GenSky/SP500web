@@ -886,26 +886,20 @@ th { background: #dbeafe; }
   }
 }
 
-/* Plain-English trade explanation overrides */
-.trade-reasons {
+/* Simple trade explanation overrides */
+.trade-simple {
   display: grid;
-  gap: 6px;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
+  gap: 5px;
+  margin-top: 7px;
   color: var(--muted);
   line-height: 1.35;
 }
 
-.trade-reasons li {
-  position: relative;
-  padding-left: 18px;
+.trade-simple strong {
+  color: var(--ink);
+  font-size: .92rem;
 }
 
-.trade-reasons li::before {
-  position: absolute;
-  left: 0;
-  content: "-";
-  color: var(--ink);
-  font-weight: 900;
+.trade-simple span {
+  display: block;
 }

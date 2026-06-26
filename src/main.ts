@@ -742,9 +742,10 @@ function renderTracker(): string {
 }
 
 function renderTradeWhy(text: string): string {
-  const reasons = text.split(/\n+/).map((reason) => reason.trim()).filter(Boolean);
-  if (reasons.length <= 1) return `<p>${escapeHtml(text)}</p>`;
-  return `<ul class="trade-reasons">${reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
+  const [scoreLine, ...rest] = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const explanation = rest.join(" ");
+  if (!scoreLine || !explanation) return `<p>${escapeHtml(text)}</p>`;
+  return `<div class="trade-simple"><strong>${escapeHtml(scoreLine)}</strong><span>${escapeHtml(explanation)}</span></div>`;
 }
 
 function renderTrackMessage(): string {
