@@ -43,7 +43,7 @@ function render(): void {
       <nav class="topbar" aria-label="Primary navigation">
         <a class="brand" href="#top" aria-label="Gensky Value Picker home">
           <span class="brand-mark">GV</span>
-          <span><strong>Gensky Value Picker</strong><small>Research and paper tracking only</small></span>
+          <span><strong>Gensky Value Picker</strong><small>Research only</small></span>
         </a>
         <div class="top-actions">
           <a href="#best-ideas">Best Ideas</a>
@@ -54,8 +54,8 @@ function render(): void {
       <section class="hero" id="top">
         <div>
           <p class="eyebrow">Stock universe</p>
-          <h1>Rank value ideas across Nasdaq-100, S&P 500, custom watchlists, and the combined market list.</h1>
-          <p class="warning">Sample data only. Replace with fresh market data before making real decisions.</p>
+          <h1>Value scanner.</h1>
+          <p class="warning">Research only. Verify data before decisions.</p>
         </div>
         <div class="universe-panel">
           <label for="universe-select">Universe</label>
@@ -87,11 +87,11 @@ function render(): void {
       </section>
 
       <section class="section score-summary" aria-label="Score outputs">
-        ${summaryCard("Visible rows", visible.length.toString(), "Includes scored ideas and needs-data constituents")}
-        ${summaryCard("Scored ideas", visible.filter((stock) => stock.hasMetrics !== false).length.toString(), "Rows with valuation and quality metrics")}
-        ${summaryCard("Needs data", needsDataCount.toString(), "Constituents waiting for CSV/API metrics")}
-        ${summaryCard("Top final score", formatScore(visible.find((stock) => stock.hasMetrics !== false)?.finalRiskAdjustedValueScore), "Ranked by risk-adjusted value")}
-        ${summaryCard("Tracked trades", trackedTrades.length.toString(), "Stored in localStorage with universe")}
+        ${summaryCard("Rows", visible.length.toString(), "After filters")}
+        ${summaryCard("Scored", visible.filter((stock) => stock.hasMetrics !== false).length.toString(), "With metrics")}
+        ${summaryCard("Needs data", needsDataCount.toString(), "Missing metrics")}
+        ${summaryCard("Top score", formatScore(visible.find((stock) => stock.hasMetrics !== false)?.finalRiskAdjustedValueScore), "Risk-adjusted")}
+        ${summaryCard("Tracked", trackedTrades.length.toString(), "Local paper list")}
       </section>
 
       <section class="section" id="rankings">
@@ -100,7 +100,7 @@ function render(): void {
             <p class="eyebrow">Rankings</p>
             <h2>${rankingTitle(filters.universe)}</h2>
           </div>
-          <p>Default sort: Final Risk-Adjusted Value Score.</p>
+          <p>Sorted by final risk-adjusted value.</p>
         </div>
         <div class="score-key">
           <span>Value Score</span>
@@ -325,40 +325,40 @@ function renderStockRow(stock: ScoredStock): string {
   if (stock.hasMetrics === false) {
     return `
       <tr class="needs-data-row">
-        <td><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-        <td>${displayUniverse(stock)}</td>
-        <td>${stock.sector}<small>${stock.industry}</small></td>
-        <td>--</td>
-        <td><span class="status-pill muted">Needs data</span></td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>--</td>
-        <td>Needs data</td>
-        <td><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
-        <td><button type="button" disabled>Needs data</button></td>
+        <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
+        <td data-label="Universe">${displayUniverse(stock)}</td>
+        <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
+        <td data-label="Price">--</td>
+        <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
+        <td data-label="Value">--</td>
+        <td data-label="Quality">--</td>
+        <td data-label="Balance">--</td>
+        <td data-label="Growth">--</td>
+        <td data-label="Momentum">--</td>
+        <td data-label="Trap risk">--</td>
+        <td data-label="Category">Needs data</td>
+        <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+        <td data-label="Track"><button type="button" disabled>Needs data</button></td>
       </tr>
     `;
   }
 
   return `
     <tr>
-      <td><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-      <td>${displayUniverse(stock)}</td>
-      <td>${stock.sector}<small>${stock.industry}</small></td>
-      <td>${currency(stock.price)}</td>
-      <td><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
-      <td>${formatScore(stock.valueScore)}</td>
-      <td>${formatScore(stock.qualityScore)}</td>
-      <td>${formatScore(stock.balanceSheetScore)}</td>
-      <td>${formatScore(stock.growthScore)}</td>
-      <td>${formatScore(stock.momentumSetupScore)}</td>
-      <td><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
-      <td>${stock.category}</td>
-      <td><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
-      <td><button type="button" data-track="${stock.ticker}">Track</button></td>
+      <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
+      <td data-label="Universe">${displayUniverse(stock)}</td>
+      <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
+      <td data-label="Price">${currency(stock.price)}</td>
+      <td data-label="Final score"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
+      <td data-label="Value">${formatScore(stock.valueScore)}</td>
+      <td data-label="Quality">${formatScore(stock.qualityScore)}</td>
+      <td data-label="Balance">${formatScore(stock.balanceSheetScore)}</td>
+      <td data-label="Growth">${formatScore(stock.growthScore)}</td>
+      <td data-label="Momentum">${formatScore(stock.momentumSetupScore)}</td>
+      <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
+      <td data-label="Category">${stock.category}</td>
+      <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
+      <td data-label="Track"><button type="button" data-track="${stock.ticker}">Track</button></td>
     </tr>
   `;
 }
@@ -585,10 +585,10 @@ function bindCheckbox(id: string, handler: (value: boolean) => void): void {
 
 function rankingTitle(universe: StockUniverse): string {
   const titles: Record<StockUniverse, string> = {
-    NASDAQ_100: "Top undervalued Nasdaq-100 stocks.",
-    SP500: "Top undervalued S&P 500 stocks.",
-    CUSTOM: "Top undervalued custom watchlist stocks.",
-    ALL: "Top undervalued stocks overall."
+    NASDAQ_100: "Nasdaq-100 value list",
+    SP500: "S&P 500 value list",
+    CUSTOM: "Custom watchlist value list",
+    ALL: "Combined value list"
   };
   return titles[universe];
 }

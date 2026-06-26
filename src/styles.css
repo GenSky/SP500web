@@ -200,3 +200,70 @@ details p { margin: 8px 0 0; color: var(--muted); }
   .chart-wrap, .chart-stats { padding-left: 14px; padding-right: 14px; }
   .chart-thesis { margin-left: 14px; margin-right: 14px; }
 }
+
+/* Compact scanner layout overrides */
+.app-shell { min-height: auto; }
+.hero { grid-template-columns: minmax(280px, .7fr) minmax(320px, .55fr); align-items: start; padding: 34px 0 30px; }
+.hero h1 { font-size: clamp(2rem, 4.5vw, 4rem); line-height: 1; }
+.warning { margin-top: 14px; padding: 9px 11px; font-size: .92rem; }
+.universe-panel { padding: 18px; }
+.section { padding: 28px 0; }
+.filters { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.score-summary article { padding: 16px; }
+.score-summary strong { margin: 4px 0; font-size: 1.8rem; }
+.section-heading { margin-bottom: 14px; }
+.section-heading h2 { font-size: clamp(1.55rem, 2.5vw, 2.4rem); }
+
+@media (max-width: 700px) {
+  body { background: #f6f8fb; }
+  .topbar, .hero, .section { width: min(100% - 22px, 1220px); }
+  .app-shell { background: linear-gradient(120deg, #0f172a, #0f3f4a); }
+  .topbar { gap: 14px; padding: 14px 0 8px; }
+  .brand { gap: 9px; }
+  .brand-mark { width: 40px; height: 40px; }
+  .brand small { font-size: .68rem; letter-spacing: .06em; }
+  .top-actions { width: 100%; gap: 4px; justify-content: flex-start; }
+  .top-actions a { padding: 6px 8px; font-size: .9rem; }
+  .hero { display: block; padding: 18px 0 16px; }
+  .hero > div:first-child { display: none; }
+  .universe-panel { padding: 12px; border-color: rgba(255,255,255,.18); box-shadow: none; }
+  .universe-panel label { margin-bottom: 6px; font-size: .68rem; }
+  .universe-panel select { min-height: 38px; font-size: .95rem; }
+  .universe-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .universe-stats span { padding: 8px 7px; font-size: 1.05rem; }
+  .universe-stats small { font-size: .58rem; letter-spacing: .04em; }
+  .section { padding: 16px 0; }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .filters label { gap: 4px; font-size: .78rem; }
+  .filters label:first-child { grid-column: 1 / -1; }
+  .filters .checkbox { min-height: 36px; padding: 7px 8px; font-size: .82rem; }
+  select, input { min-height: 36px; padding: 7px 8px; }
+  .score-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 4px; }
+  .score-summary article { padding: 12px; box-shadow: none; }
+  .score-summary span, .score-summary small { letter-spacing: .05em; font-size: .63rem; }
+  .score-summary strong { font-size: 1.55rem; }
+  .section-heading { display: block; margin-bottom: 10px; }
+  .section-heading .eyebrow { margin-bottom: 5px; font-size: .68rem; }
+  .section-heading h2 { font-size: 1.55rem; line-height: 1.08; }
+  .section-heading p { margin-top: 8px; font-size: .9rem; }
+  .score-key { display: none; }
+  .table-wrap { overflow: visible; border: 0; background: transparent; }
+  table { display: block; width: 100%; min-width: 0; }
+  thead { display: none; }
+  tbody { display: grid; gap: 10px; }
+  tr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 8px 20px rgba(23,32,42,.05); }
+  td { display: block; padding: 0; border: 0; font-size: .9rem; }
+  td::before { display: block; margin-bottom: 2px; color: var(--muted); content: attr(data-label); text-transform: uppercase; letter-spacing: .06em; font-size: .62rem; font-weight: 850; }
+  td:nth-child(1), td:nth-child(13), td:nth-child(14) { grid-column: 1 / -1; }
+  td:nth-child(5), td:nth-child(11) { align-self: start; }
+  td:nth-child(6), td:nth-child(7), td:nth-child(8), td:nth-child(9), td:nth-child(10) { display: none; }
+  td small { margin-top: 1px; }
+  .ticker-link strong { font-size: 1.1rem; }
+  details { max-width: none; }
+  details p { font-size: .86rem; }
+  .score-pill, .risk, .status-pill { min-width: 38px; }
+  .best-ideas { padding: 18px 11px; }
+  .idea-grid, .sector-grid { grid-template-columns: 1fr; gap: 10px; }
+  .idea-card, .sector-grid article { padding: 14px; box-shadow: none; }
+  .tracker-card { grid-template-columns: 1fr; box-shadow: none; }
+}
