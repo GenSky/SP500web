@@ -383,7 +383,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            <th>Ticker</th><th>Universe</th><th>Sector</th><th>Price</th><th>Final Risk-Adjusted Value Score</th><th>Value Score</th><th>Quality Score</th><th>Balance Sheet Score</th><th>Growth Score</th><th>Momentum Setup Score</th><th>Value Trap Risk Score</th><th>Category</th><th>AI Trade Picker</th><th></th>
+            <th>Ticker</th><th>Universe</th><th>Sector</th><th>Price</th><th>Final Risk-Adjusted Value Score</th><th>Value Score</th><th>Quality Score</th><th>Balance Sheet Score</th><th>Growth Score</th><th>Momentum Setup Score</th><th>Value Trap Risk Score</th><th>What it does</th><th>AI Trade Picker</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -430,8 +430,8 @@ function renderStockCard(stock: ScoredStock): string {
         ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
       </div>
       <div class="stock-card-note">
-        <strong>${stock.category}</strong>
-        <span>${plainScoreMeaning(stock)}</span>
+        <strong>What it does</strong>
+        <span>${escapeHtml(companySnippet(stock))}</span>
       </div>
       <div class="stock-card-trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></div>
       <button type="button" data-track="${stock.ticker}">Track</button>
@@ -454,7 +454,7 @@ function renderStockRow(stock: ScoredStock): string {
         <td data-label="Growth">--</td>
         <td data-label="Momentum">--</td>
         <td data-label="Trap risk">--</td>
-        <td data-label="Category">Needs data</td>
+        <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
         <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
         <td data-label="Track"><button type="button" disabled>Needs data</button></td>
       </tr>
@@ -474,7 +474,7 @@ function renderStockRow(stock: ScoredStock): string {
       <td data-label="Growth">${formatScore(stock.growthScore)}</td>
       <td data-label="Momentum">${formatScore(stock.momentumSetupScore)}</td>
       <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
-      <td data-label="Category">${stock.category}</td>
+      <td data-label="What it does">${escapeHtml(companySnippet(stock))}</td>
       <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this trade?</summary><p>${stock.tradeIdea.why}</p></details></td>
       <td data-label="Track"><button type="button" data-track="${stock.ticker}">Track</button></td>
     </tr>
@@ -661,7 +661,7 @@ function renderSectorLeaders(stocks: ScoredStock[]): string {
 }
 
 function ideaList(title: string, stocks: ScoredStock[]): string {
-  return `<article class="idea-card"><h3>${title}</h3>${stocks.length ? `<ol>${stocks.map((stock) => `<li><span>${stock.ticker}</span><strong>${formatScore(stock.finalRiskAdjustedValueScore)}</strong><small>${stock.category}</small></li>`).join("")}</ol>` : `<p>No ideas match.</p>`}</article>`;
+  return `<article class="idea-card"><h3>${title}</h3>${stocks.length ? `<ol>${stocks.map((stock) => `<li><span>${stock.ticker}</span><strong>${formatScore(stock.finalRiskAdjustedValueScore)}</strong><small>${escapeHtml(companySnippet(stock))}</small></li>`).join("")}</ol>` : `<p>No ideas match.</p>`}</article>`;
 }
 
 function topIdeas(stocks: ScoredStock[], universe: StockUniverse): ScoredStock[] {
@@ -738,11 +738,34 @@ function legendItem(label: string, text: string): string {
   return `<article><strong>${label}</strong><span>${text}</span></article>`;
 }
 
-function plainScoreMeaning(stock: ScoredStock): string {
-  if (stock.valueTrapRiskScore >= 70) return "Cheap-looking, but the risk score says be careful.";
-  if (stock.finalRiskAdjustedValueScore >= 70) return "Cleaner value idea. Still verify the data before acting.";
-  if (stock.finalRiskAdjustedValueScore >= 50) return "Mixed idea. Useful for research, not an automatic buy.";
-  return "Lower-priority idea unless you have a stronger outside reason.";
+function companySnippet(stock: StockMetric): string {
+  const sector = stock.sector.toLowerCase();
+  const industry = stock.industry.toLowerCase();
+  const text = `${sector} ${industry}`;
+
+  const rules: Array<[RegExp, string]> = [
+    [/semiconductor|chip/, "Makes chips or chip technology used in electronics, data centers, cars, and devices."],
+    [/software|application|infrastructure|information technology services/, "Sells software or tech services businesses use to run their work, data, customers, or operations."],
+    [/communication|internet|interactive media|social media|entertainment|streaming/, "Runs media, internet, telecom, or entertainment platforms that make money from ads, subscriptions, or services."],
+    [/bank|capital markets|credit|financial data|asset management|mortgage/, "Provides money services like banking, lending, investing, payments, or financial market tools."],
+    [/insurance/, "Sells insurance products that help people or businesses manage financial risk."],
+    [/payment|transaction/, "Processes payments and money movement for consumers, merchants, or businesses."],
+    [/healthcare|drug|pharma|biotech|medical|diagnostic|life science|managed care/, "Makes healthcare products or services, such as medicines, devices, testing, insurance, or care support."],
+    [/aerospace|defense|industrial|machinery|electrical equipment|engineering|construction|building/, "Makes or supports physical products, equipment, buildings, infrastructure, or industrial services."],
+    [/oil|gas|energy|e&p|midstream|refining|pipeline/, "Produces, transports, or sells energy like oil, natural gas, fuel, or related services."],
+    [/utility|utilities|electric|water|renewable/, "Provides essential services like electricity, gas, water, or power infrastructure."],
+    [/reit|real estate|property/, "Owns, rents, or operates real estate such as buildings, data centers, homes, stores, or offices."],
+    [/materials|chemical|mining|gold|steel|packaging|paper|metals/, "Produces raw materials or supplies like metals, chemicals, packaging, paper, or construction inputs."],
+    [/retail|apparel|restaurant|travel|hotel|leisure|auto|home improvement|consumer discretionary/, "Sells consumer products or experiences like shopping, restaurants, travel, cars, or home goods."],
+    [/food|beverage|household|personal products|tobacco|staples|grocery/, "Sells everyday consumer staples like food, drinks, household products, or personal care items."],
+    [/transport|rail|air freight|logistics|trucking|airline/, "Moves people, packages, freight, or supplies through transportation and logistics networks."]
+  ];
+
+  const match = rules.find(([pattern]) => pattern.test(text));
+  if (match) return match[1];
+
+  const cleanIndustry = stock.industry.replace(/[-_]/g, " ").replace(/\s+/g, " ").trim();
+  return `${stock.companyName} is a ${cleanIndustry || stock.sector} business in the ${stock.sector} sector.`;
 }
 
 function median(values: number[]): number {
