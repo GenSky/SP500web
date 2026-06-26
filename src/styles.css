@@ -903,3 +903,165 @@ th { background: #dbeafe; }
 .trade-simple span {
   display: block;
 }
+
+/* Stocks-first layout overrides */
+.app-shell {
+  min-height: auto;
+  border-bottom: 3px solid var(--border);
+}
+
+.scanner-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, .35fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px 0 14px;
+}
+
+.scanner-controls .warning {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  min-height: 0;
+}
+
+.scanner-controls .universe-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, .35fr) minmax(260px, 1fr);
+  align-items: end;
+  gap: 10px 12px;
+  padding: 12px;
+}
+
+.scanner-controls .universe-panel > label,
+.scanner-controls .universe-panel > select {
+  grid-column: 1;
+}
+
+.scanner-controls .ticker-search {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.rankings-section {
+  padding-top: 18px;
+}
+
+.rankings-section .section-heading {
+  margin-bottom: 10px;
+}
+
+.rankings-section .section-heading .eyebrow,
+.rankings-section .section-heading p {
+  display: none;
+}
+
+.rankings-section .section-heading h2 {
+  font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    padding-bottom: 8px;
+  }
+
+  .scanner-controls {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px 0 10px;
+  }
+
+  .scanner-controls .warning {
+    padding: 8px 10px;
+    font-size: .84rem;
+  }
+
+  .scanner-controls .universe-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .scanner-controls .universe-panel > label,
+  .scanner-controls .universe-panel > select,
+  .scanner-controls .ticker-search {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .scanner-controls .ticker-search-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .scanner-controls .search-status {
+    display: none;
+  }
+
+  .rankings-section {
+    padding-top: 12px;
+  }
+
+  .rankings-section .section-heading h2 {
+    font-size: 1.45rem;
+  }
+}
+
+/* Mobile stock-first tightening */
+@media (max-width: 700px) {
+  .topbar {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .top-actions {
+    display: none;
+  }
+
+  .scanner-controls .warning {
+    min-height: 0;
+    padding: 6px 8px;
+  }
+
+  .scanner-controls .universe-panel label {
+    margin-bottom: 2px;
+  }
+
+  .scanner-controls .ticker-search label {
+    display: none;
+  }
+
+  .results-toolbar {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .results-toolbar label {
+    gap: 3px;
+  }
+
+  .view-switch button,
+  .results-toolbar select,
+  .scanner-controls select,
+  .scanner-controls input,
+  .scanner-controls button {
+    min-height: 34px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}

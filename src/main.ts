@@ -43,7 +43,6 @@ function render(): void {
   const scored = scoreAll(allStocks);
   const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
   const visible = applyFilters(scored, filters).sort(bySelectedSort);
-  const needsDataCount = visible.filter((stock) => stock.hasMetrics === false).length;
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
 
   app.innerHTML = `
@@ -60,92 +59,32 @@ function render(): void {
           <a href="#csv-import">CSV Import</a>
         </div>
       </nav>
-      <section class="hero" id="top">
-        <div>
-          <p class="eyebrow">Start here</p>
-          <h1>Pick a stock list.</h1>
-          <p class="hero-copy">The list ranks stocks from most interesting to least interesting. Higher final score is better. Lower trap risk is safer.</p>
-          <p class="warning">Research only. Verify data before decisions.</p>
-        </div>
+      <section class="hero scanner-controls" id="top" aria-label="Stock scanner controls">
+        <p class="warning">Research only. Verify data before decisions.</p>
         <div class="universe-panel">
-          <label for="universe-select">Universe</label>
+          <label for="universe-select">Stock list</label>
           <select id="universe-select">
             ${option("NASDAQ_100", "Nasdaq-100", filters.universe)}
             ${option("SP500", "S&P 500", filters.universe)}
             ${option("CUSTOM", "Custom Watchlist", filters.universe)}
             ${option("ALL", "All Stocks Combined", filters.universe)}
           </select>
-          <div class="universe-stats">
-            <span>${filterByUniverse(scored, "NASDAQ_100").length}<small>Nasdaq-100</small></span>
-            <span>${filterByUniverse(scored, "SP500").length}<small>S&P 500</small></span>
-            <span>${filterByUniverse(scored, "CUSTOM").length}<small>Custom</small></span>
-            <span>${scored.length}<small>Combined</small></span>
-          </div>
           <div class="ticker-search" role="search" aria-label="Ticker search">
-            <label for="ticker-search">Find a ticker</label>
+            <label for="ticker-search">Find ticker</label>
             <div class="ticker-search-row">
               <input id="ticker-search" type="search" autocomplete="off" placeholder="CMG, AAPL, MSFT">
               <button id="ticker-search-button" type="button">Find</button>
             </div>
-            <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Own something already? Type its ticker and jump to it."}</p>
+            <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Type a ticker and jump to it."}</p>
           </div>
         </div>
       </section>
     </header>
 
     <main>
-      <section class="section guide" aria-label="How to read this scanner">
-        <article>
-          <strong>1. Choose a universe</strong>
-          <span>S&P 500, Nasdaq-100, custom names, or everything combined.</span>
-        </article>
-        <article>
-          <strong>2. Read the final score</strong>
-          <span>70+ means strong value setup. 50-69 means mixed. Under 50 usually needs a better reason.</span>
-        </article>
-        <article>
-          <strong>3. Check trap risk</strong>
-          <span>0-30 is cleaner. 31-60 needs caution. 61+ can be cheap for a bad reason.</span>
-        </article>
-      </section>
-
-      <section class="section legend" aria-label="Score legend">
-        <h2>Score legend</h2>
-        <div class="legend-grid">
-          ${legendItem("Final score", "Best all-in ranking after valuation, quality, debt, growth, momentum, and trap penalties.")}
-          ${legendItem("Value score", "How cheap the stock looks using P/E, EV/EBITDA, FCF yield, PEG, and related metrics.")}
-          ${legendItem("Quality score", "Business strength and cleaner fundamentals. Higher is better.")}
-          ${legendItem("Trap risk", "The warning score. Higher means cheap may be dangerous because debt, weak cash flow, weak growth, or bad momentum is showing up.")}
-        </div>
-      </section>
-
-      <section class="section score-summary" aria-label="Score outputs">
-        ${summaryCard("Rows", visible.length.toString(), "After filters")}
-        ${summaryCard("Scored", visible.filter((stock) => stock.hasMetrics !== false).length.toString(), "With metrics")}
-        ${summaryCard("Needs data", needsDataCount.toString(), "Missing metrics")}
-        ${summaryCard("Top score", formatScore(visible.find((stock) => stock.hasMetrics !== false)?.finalRiskAdjustedValueScore), "Risk-adjusted")}
-        ${summaryCard("Tracked", trackedTrades.length.toString(), "Local paper list")}
-      </section>
       ${renderTrackMessage()}
 
-      <section class="section best-ideas" id="best-ideas">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Best Ideas</p>
-            <h2>Shortlists by universe, safety, upside, and trap risk.</h2>
-          </div>
-        </div>
-        <div class="idea-grid">
-          ${ideaList("Best Nasdaq-100 ideas", topIdeas(metricStocks, "NASDAQ_100"))}
-          ${ideaList("Best S&P 500 ideas", topIdeas(metricStocks, "SP500"))}
-          ${ideaList("Best overall ideas", metricStocks.slice().sort(byFinal).slice(0, 5))}
-          ${ideaList("Safest value ideas", metricStocks.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
-          ${ideaList("Highest upside risky ideas", metricStocks.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
-          ${ideaList("Avoid list / value traps", metricStocks.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
-        </div>
-      </section>
-
-      <section class="section" id="rankings">
+      <section class="section rankings-section" id="rankings">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Rankings</p>
@@ -181,6 +120,23 @@ function render(): void {
           <p>Leave these alone at first. Use them when you want a cleaner list, less debt risk, or more analyst upside.</p>
         </div>
         <div class="filters">${renderFilters(sectors)}</div>
+      </section>
+
+      <section class="section best-ideas" id="best-ideas">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Best Ideas</p>
+            <h2>Shortlists by universe, safety, upside, and trap risk.</h2>
+          </div>
+        </div>
+        <div class="idea-grid">
+          ${ideaList("Best Nasdaq-100 ideas", topIdeas(metricStocks, "NASDAQ_100"))}
+          ${ideaList("Best S&P 500 ideas", topIdeas(metricStocks, "SP500"))}
+          ${ideaList("Best overall ideas", metricStocks.slice().sort(byFinal).slice(0, 5))}
+          ${ideaList("Safest value ideas", metricStocks.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
+          ${ideaList("Highest upside risky ideas", metricStocks.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
+          ${ideaList("Avoid list / value traps", metricStocks.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
+        </div>
       </section>
 
       <section class="section sector-rankings">
