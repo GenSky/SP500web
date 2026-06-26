@@ -4,7 +4,11 @@ S&P500web is research, idea generation, and paper tracking only. This version do
 
 ## Current Version
 
-The app uses full public Nasdaq-100 and S&P 500 constituent lists, typed sample metrics, and user-imported custom watchlists. Constituent rows without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are visible as "Needs data" and are not scored until fresh data is imported. The UI includes this warning: "Sample data only. Replace with fresh market data before making real decisions."
+The app uses full public Nasdaq-100 and S&P 500 constituent lists, generated free Yahoo Finance metrics, typed sample fallback metrics, and user-imported custom watchlists. Constituent rows without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are visible as "Needs data" and are not scored until fresh data is imported or refreshed. The UI includes this warning: "Sample data only. Replace with fresh market data before making real decisions."
+
+## Current Free Refresh
+
+`scripts/fetch-free-market-data.mjs` generates `src/data/freeMarketData.ts` from free Yahoo Finance data through `yahoo-finance2`. It pulls current quote, market cap, valuation, FCF-derived yield, growth, debt, analyst target-derived upside, and 52-week drawdown where available. This is useful for broad no-cost research coverage, but it is unofficial and should be verified against filings, exchange data, and a current quote before decisions.
 
 ## Future Data Options
 

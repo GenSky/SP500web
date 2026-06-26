@@ -1,3 +1,4 @@
+import { freeMarketData } from "../data/freeMarketData";
 import { indexConstituents } from "../data/indexConstituents";
 import { sampleNasdaqStocks } from "../data/sampleNasdaqStocks";
 import { sampleSp500Stocks } from "../data/sampleSp500Stocks";
@@ -5,7 +6,7 @@ import type { StockMetric, StockUniverse } from "../types";
 
 export function mergeStocks(customStocks: StockMetric[]): StockMetric[] {
   const byTicker = new Map<string, StockMetric>();
-  for (const stock of [...indexConstituents, ...sampleNasdaqStocks, ...sampleSp500Stocks, ...customStocks]) {
+  for (const stock of [...indexConstituents, ...sampleNasdaqStocks, ...sampleSp500Stocks, ...freeMarketData, ...customStocks]) {
     const existing = byTicker.get(stock.ticker);
     if (!existing) {
       byTicker.set(stock.ticker, stock);

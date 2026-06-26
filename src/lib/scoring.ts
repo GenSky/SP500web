@@ -10,7 +10,7 @@ const STRUCTURALLY_CHALLENGED_INDUSTRIES = [
 
 const CYCLICAL_SECTORS = new Set(["Energy", "Materials", "Industrials", "Consumer Discretionary", "Real Estate"]);
 
-const clamp = (value: number, min = 0, max = 100): number => Math.min(max, Math.max(min, value));
+const clamp = (value: number, min = 0, max = 100): number => Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min;
 
 const lowerIsBetter = (value: number, best: number, worst: number): number => {
   if (!Number.isFinite(value)) return 45;

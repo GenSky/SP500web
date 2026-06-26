@@ -224,8 +224,8 @@ function applyFilters(stocks: ScoredStock[], filterState: FilterState): ScoredSt
     })
     .filter((stock) => stock.hasMetrics === false || stock.debtRisk <= filterState.maxDebtRisk)
     .filter((stock) => stock.hasMetrics === false || !filterState.positiveFcfOnly || stock.freeCashFlowYield > 0)
-    .filter((stock) => stock.hasMetrics === false || stock.analystUpsidePercent >= filterState.minAnalystUpside)
-    .filter((stock) => stock.hasMetrics === false || stock.oneYearDrawdownPercent >= filterState.minDrawdown)
+    .filter((stock) => stock.hasMetrics === false || filterState.minAnalystUpside <= 0 || stock.analystUpsidePercent >= filterState.minAnalystUpside)
+    .filter((stock) => stock.hasMetrics === false || filterState.minDrawdown <= 0 || stock.oneYearDrawdownPercent >= filterState.minDrawdown)
     .filter((stock) => stock.hasMetrics === false || !filterState.avoidValueTraps || stock.valueTrapRiskScore < 70);
 }
 

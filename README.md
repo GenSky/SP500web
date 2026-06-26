@@ -7,7 +7,7 @@ A research-only stock value dashboard for ranking ideas across multiple universe
 - Custom Watchlist
 - All Stocks Combined
 
-The app includes full Nasdaq-100 and S&P 500 constituent coverage, ranks stocks with sample or imported metrics, suggests paper trade structures, and stores tracked ideas in `localStorage`.
+The app includes full Nasdaq-100 and S&P 500 constituent coverage, ranks stocks with free refreshed, sample, or imported metrics, suggests paper trade structures, and stores tracked ideas in `localStorage`.
 
 > Sample data only. Replace with fresh market data before making real decisions.
 
@@ -29,19 +29,24 @@ The local folder name contains an ampersand, so this repo uses a local `.npmrc` 
 npm install
 npm run dev
 npm run build
+npm run refresh:free-data
 ```
 
 ## Data
 
-Current app data combines full public index constituent lists with sample metric data:
+Current app data combines full public index constituent lists, a generated free market data refresh, and sample fallback metric data:
 
 - `src/data/indexConstituents.ts`
+- `src/data/freeMarketData.ts`
 - `src/data/sampleNasdaqStocks.ts`
 - `src/data/sampleSp500Stocks.ts`
+- `scripts/fetch-free-market-data.mjs`
 
-The constituent file covers the full Nasdaq-100 and S&P 500 security rows used by the selector. Stocks without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are shown as `Needs data` and are excluded from rankings until sample, CSV, or future API data supplies those fields.
+Run `npm run refresh:free-data` to regenerate `src/data/freeMarketData.ts` from free Yahoo Finance data. This is no-key and no-paid-API, but it is unofficial, can be delayed, incomplete, rate-limited, or unavailable. The generated notes flag fields that needed defaults.
 
-The S&P 500 sample metrics file includes 50+ S&P 500-style stocks across Technology, Communication Services, Consumer Discretionary, Consumer Staples, Financials, Healthcare, Industrials, Energy, Utilities, Real Estate, and Materials.
+The constituent file covers the full Nasdaq-100 and S&P 500 security rows used by the selector. Stocks without valuation, growth, balance sheet, cash flow, analyst, and momentum metrics are shown as `Needs data` and are excluded from rankings until sample, free refresh, CSV, or future API data supplies those fields.
+
+The S&P 500 sample metrics file remains as a fallback and includes 50+ S&P 500-style stocks across Technology, Communication Services, Consumer Discretionary, Consumer Staples, Financials, Healthcare, Industrials, Energy, Utilities, Real Estate, and Materials.
 
 Future data-source options are documented in `docs/data-source-plan.md`.
 
