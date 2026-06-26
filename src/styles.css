@@ -849,3 +849,39 @@ th { background: #dbeafe; }
     flex-direction: column;
   }
 }
+
+/* Ticker search overrides */
+.ticker-search {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px solid color-mix(in srgb, var(--border) 22%, transparent);
+}
+
+.ticker-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.ticker-search input {
+  width: 100%;
+}
+
+.search-status {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.stock-focus {
+  outline: 4px solid var(--primary-strong);
+  outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+  .ticker-search-row {
+    grid-template-columns: 1fr;
+  }
+}

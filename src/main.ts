@@ -1,4 +1,4 @@
-import "./styles.css";
+﻿import "./styles.css";
 import type { ChartPoint } from "./data/freeChartData";
 import { parseCsvWatchlist } from "./lib/csvImport";
 import { scoreStock } from "./lib/scoring";
@@ -21,6 +21,8 @@ type SortKey = "final" | "value" | "quality" | "trapRisk" | "upside" | "ticker";
 let viewMode: ViewMode = "cards";
 let sortKey: SortKey = "final";
 let trackMessage = "";
+let tickerSearchMessage = "";
+let pendingTickerFocus = "";
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
 let filters: FilterState = {
@@ -78,6 +80,14 @@ function render(): void {
             <span>${filterByUniverse(scored, "SP500").length}<small>S&P 500</small></span>
             <span>${filterByUniverse(scored, "CUSTOM").length}<small>Custom</small></span>
             <span>${scored.length}<small>Combined</small></span>
+          </div>
+          <div class="ticker-search" role="search" aria-label="Ticker search">
+            <label for="ticker-search">Find a ticker</label>
+            <div class="ticker-search-row">
+              <input id="ticker-search" type="search" autocomplete="off" placeholder="CMG, AAPL, MSFT">
+              <button id="ticker-search-button" type="button">Find</button>
+            </div>
+            <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Own something already? Type its ticker and jump to it."}</p>
           </div>
         </div>
       </section>
@@ -212,6 +222,7 @@ function render(): void {
   `;
 
   bindEvents(scored);
+  focusPendingTicker();
 }
 
 function scoreAll(stocks: StockMetric[]): ScoredStock[] {
@@ -282,6 +293,15 @@ function bindEvents(scored: ScoredStock[]): void {
   bindCheckbox("positive-fcf", (value) => { filters = { ...filters, positiveFcfOnly: value }; render(); });
   bindCheckbox("avoid-traps", (value) => { filters = { ...filters, avoidValueTraps: value }; render(); });
   bindSelect("sort-select", (value) => { sortKey = value as SortKey; render(); });
+
+  const runTickerSearch = () => searchTicker(scored);
+  document.querySelector<HTMLButtonElement>("#ticker-search-button")?.addEventListener("click", runTickerSearch);
+  document.querySelector<HTMLInputElement>("#ticker-search")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      runTickerSearch();
+    }
+  });
 
   document.querySelectorAll<HTMLButtonElement>("[data-view-mode]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -367,6 +387,66 @@ function bindEvents(scored: ScoredStock[]): void {
   });
 }
 
+function searchTicker(scored: ScoredStock[]): void {
+  const input = document.querySelector<HTMLInputElement>("#ticker-search");
+  const ticker = input?.value.trim().toUpperCase() ?? "";
+  if (!ticker) {
+    tickerSearchMessage = "Type a ticker first.";
+    render();
+    return;
+  }
+
+  const stock = scored.find((item) => item.ticker.toUpperCase() === ticker);
+  if (!stock) {
+    tickerSearchMessage = `${ticker} is not in the loaded lists yet. Add it with CSV import if you want it here.`;
+    render();
+    return;
+  }
+
+  const isVisibleNow = applyFilters(scored, filters).some((item) => item.ticker === stock.ticker);
+  if (!isVisibleNow) {
+    filters = {
+      universe: defaultUniverseForStock(stock),
+      sector: "All",
+      minValueScore: 0,
+      maxDebtRisk: 100,
+      positiveFcfOnly: false,
+      minAnalystUpside: 0,
+      minDrawdown: 0,
+      avoidValueTraps: false
+    };
+  }
+  viewMode = "cards";
+  tickerSearchMessage = `Found ${stock.ticker}: ${stock.companyName}`;
+  pendingTickerFocus = stock.ticker;
+  render();
+}
+
+function focusPendingTicker(): void {
+  if (!pendingTickerFocus) return;
+  const ticker = pendingTickerFocus;
+  pendingTickerFocus = "";
+  window.setTimeout(() => {
+    const target = document.querySelector<HTMLElement>(`[data-stock-ticker="${cssEscape(ticker)}"]`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("stock-focus");
+    window.setTimeout(() => target.classList.remove("stock-focus"), 2600);
+  }, 0);
+}
+
+function defaultUniverseForStock(stock: ScoredStock): StockUniverse {
+  if (filters.universe !== "ALL" && filterByUniverse([stock], filters.universe).length > 0) return filters.universe;
+  if (stock.indexMembership.includes("SP500")) return "SP500";
+  if (stock.indexMembership.includes("NASDAQ_100")) return "NASDAQ_100";
+  if (filterByUniverse([stock], "CUSTOM").length > 0) return "CUSTOM";
+  return "ALL";
+}
+
+function cssEscape(value: string): string {
+  return typeof CSS !== "undefined" && CSS.escape ? CSS.escape(value) : value.replace(/"/g, "\\\"");
+}
+
 function renderFilters(sectors: string[]): string {
   return `
     <label>Sector<select id="sector-filter">${sectors.map((sector) => option(sector, sector, filters.sector)).join("")}</select></label>
@@ -414,7 +494,7 @@ function renderTable(stocks: ScoredStock[]): string {
 function renderStockCard(stock: ScoredStock): string {
   if (stock.hasMetrics === false) {
     return `
-      <article class="stock-card needs-data-row">
+      <article class="stock-card needs-data-row" data-stock-ticker="${escapeHtml(stock.ticker)}">
         <div class="stock-card-main">
           <button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button>
           <span class="status-pill muted">Needs data</span>
@@ -430,7 +510,7 @@ function renderStockCard(stock: ScoredStock): string {
   }
 
   return `
-    <article class="stock-card">
+    <article class="stock-card" data-stock-ticker="${escapeHtml(stock.ticker)}">
       <div class="stock-card-main">
         <button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button>
         <div class="stock-card-score">
@@ -458,7 +538,7 @@ function renderStockCard(stock: ScoredStock): string {
 function renderStockRow(stock: ScoredStock): string {
   if (stock.hasMetrics === false) {
     return `
-      <tr class="needs-data-row">
+      <tr class="needs-data-row" data-stock-ticker="${escapeHtml(stock.ticker)}">
         <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
         <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
         <td data-label="Price">--</td>
@@ -477,7 +557,7 @@ function renderStockRow(stock: ScoredStock): string {
   }
 
   return `
-    <tr>
+    <tr data-stock-ticker="${escapeHtml(stock.ticker)}">
       <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
       <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
       <td data-label="Price">${currency(stock.price)}</td>
