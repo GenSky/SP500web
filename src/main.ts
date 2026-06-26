@@ -383,7 +383,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            <th>Ticker</th><th>Universe</th><th>Sector</th><th>Price</th><th>Final Risk-Adjusted Value Score</th><th>Value Score</th><th>Quality Score</th><th>Balance Sheet Score</th><th>Growth Score</th><th>Momentum Setup Score</th><th>Value Trap Risk Score</th><th>What it does</th><th>AI Trade Picker</th><th></th>
+            <th>Ticker</th><th>Sector</th><th>Price</th><th>Final Risk-Adjusted Value Score</th><th>Value Score</th><th>Quality Score</th><th>Balance Sheet Score</th><th>Growth Score</th><th>Momentum Setup Score</th><th>Value Trap Risk Score</th><th>What it does</th><th>AI Trade Picker</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -402,7 +402,6 @@ function renderStockCard(stock: ScoredStock): string {
           <span class="status-pill muted">Needs data</span>
         </div>
         <div class="stock-card-grid">
-          ${metricTile("Universe", displayUniverse(stock))}
           ${metricTile("Sector", stock.sector)}
           ${metricTile("Industry", stock.industry)}
         </div>
@@ -423,7 +422,6 @@ function renderStockCard(stock: ScoredStock): string {
       </div>
       <div class="stock-card-grid">
         ${metricTile("Price", currency(stock.price))}
-        ${metricTile("Universe", displayUniverse(stock))}
         ${metricTile("Sector", stock.sector)}
         ${metricTile("Value", formatScore(stock.valueScore))}
         ${metricTile("Quality", formatScore(stock.qualityScore))}
@@ -444,7 +442,6 @@ function renderStockRow(stock: ScoredStock): string {
     return `
       <tr class="needs-data-row">
         <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-        <td data-label="Universe">${displayUniverse(stock)}</td>
         <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
         <td data-label="Price">--</td>
         <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
@@ -464,7 +461,6 @@ function renderStockRow(stock: ScoredStock): string {
   return `
     <tr>
       <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
-      <td data-label="Universe">${displayUniverse(stock)}</td>
       <td data-label="Sector">${stock.sector}<small>${stock.industry}</small></td>
       <td data-label="Price">${currency(stock.price)}</td>
       <td data-label="Final score"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
