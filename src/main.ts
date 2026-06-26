@@ -116,6 +116,23 @@ function render(): void {
         ${summaryCard("Tracked", trackedTrades.length.toString(), "Local paper list")}
       </section>
 
+      <section class="section best-ideas" id="best-ideas">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Best Ideas</p>
+            <h2>Shortlists by universe, safety, upside, and trap risk.</h2>
+          </div>
+        </div>
+        <div class="idea-grid">
+          ${ideaList("Best Nasdaq-100 ideas", topIdeas(metricStocks, "NASDAQ_100"))}
+          ${ideaList("Best S&P 500 ideas", topIdeas(metricStocks, "SP500"))}
+          ${ideaList("Best overall ideas", metricStocks.slice().sort(byFinal).slice(0, 5))}
+          ${ideaList("Safest value ideas", metricStocks.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
+          ${ideaList("Highest upside risky ideas", metricStocks.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
+          ${ideaList("Avoid list / value traps", metricStocks.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
+        </div>
+      </section>
+
       <section class="section" id="rankings">
         <div class="section-heading">
           <div>
@@ -152,23 +169,6 @@ function render(): void {
           <p>Leave these alone at first. Use them when you want a cleaner list, less debt risk, or more analyst upside.</p>
         </div>
         <div class="filters">${renderFilters(sectors)}</div>
-      </section>
-
-      <section class="section best-ideas" id="best-ideas">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Best Ideas</p>
-            <h2>Shortlists by universe, safety, upside, and trap risk.</h2>
-          </div>
-        </div>
-        <div class="idea-grid">
-          ${ideaList("Best Nasdaq-100 ideas", topIdeas(metricStocks, "NASDAQ_100"))}
-          ${ideaList("Best S&P 500 ideas", topIdeas(metricStocks, "SP500"))}
-          ${ideaList("Best overall ideas", metricStocks.slice().sort(byFinal).slice(0, 5))}
-          ${ideaList("Safest value ideas", metricStocks.filter((stock) => stock.valueScore >= 60 && stock.valueTrapRiskScore < 35).sort(byFinal).slice(0, 5))}
-          ${ideaList("Highest upside risky ideas", metricStocks.filter((stock) => stock.analystUpsidePercent >= 15).sort((a, b) => b.analystUpsidePercent - a.analystUpsidePercent).slice(0, 5))}
-          ${ideaList("Avoid list / value traps", metricStocks.filter((stock) => stock.valueTrapRiskScore >= 65).sort((a, b) => b.valueTrapRiskScore - a.valueTrapRiskScore).slice(0, 5))}
-        </div>
       </section>
 
       <section class="section sector-rankings">
@@ -657,7 +657,7 @@ function renderSectorLeaders(stocks: ScoredStock[]): string {
 }
 
 function ideaList(title: string, stocks: ScoredStock[]): string {
-  return `<article class="idea-card"><h3>${title}</h3>${stocks.length ? `<ol>${stocks.map((stock) => `<li><span>${stock.ticker}</span><strong>${formatScore(stock.finalRiskAdjustedValueScore)}</strong><small>${escapeHtml(companySnippet(stock))}</small></li>`).join("")}</ol>` : `<p>No ideas match.</p>`}</article>`;
+  return `<article class="idea-card"><h3>${title}</h3>${stocks.length ? `<ol>${stocks.map((stock) => `<li><button class="idea-ticker" type="button" data-symbol="${stock.ticker}"><span>${stock.ticker}</span><small>${escapeHtml(stock.companyName)}</small></button><strong>${formatScore(stock.finalRiskAdjustedValueScore)}</strong><small>${escapeHtml(companySnippet(stock))}</small></li>`).join("")}</ol>` : `<p>No ideas match.</p>`}</article>`;
 }
 
 function topIdeas(stocks: ScoredStock[], universe: StockUniverse): ScoredStock[] {

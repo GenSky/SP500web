@@ -777,3 +777,42 @@ th { background: #dbeafe; }
   }
   .app-shell { background: #d9e9f2; }
 }
+
+
+/* Best Ideas clickable ticker overrides */
+.idea-card li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: start;
+}
+.idea-ticker {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: none !important;
+}
+.idea-ticker:hover {
+  background: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: .16em;
+}
+.idea-ticker span,
+.idea-ticker small {
+  display: block;
+}
+.idea-ticker small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 700;
+}
+.idea-card li > small {
+  grid-column: 1 / -1;
+}
+
+.section { scroll-margin-top: 92px; }
