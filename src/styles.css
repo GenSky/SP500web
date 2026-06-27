@@ -1248,3 +1248,118 @@ th { background: #dbeafe; }
     display: none;
   }
 }
+
+/* Result controls, paging, and focus mode */
+.results-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  padding: 8px 0;
+  background: var(--surface);
+}
+
+.results-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 3px solid var(--border);
+  background: var(--panel);
+}
+
+.results-status strong,
+.results-status span {
+  font-size: .9rem;
+}
+
+.results-status span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.results-status div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.results-status button,
+.sector-chips button {
+  min-height: 34px;
+  padding: 6px 9px;
+}
+
+.search-focus {
+  background: #bdebd6;
+}
+
+.sector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.sector-chips button {
+  background: var(--panel);
+}
+
+.sector-chips button.active {
+  background: var(--primary);
+}
+
+.back-top {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 30;
+  min-height: 38px;
+}
+
+@media (max-width: 700px) {
+  .results-toolbar {
+    top: 0;
+    margin-left: -1px;
+    margin-right: -1px;
+    padding: 6px 0;
+  }
+
+  .results-status {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .results-status strong,
+  .results-status span {
+    font-size: .78rem;
+  }
+
+  .results-status button,
+  .sector-chips button {
+    min-height: 30px;
+    padding: 5px 7px;
+    font-size: .76rem;
+  }
+
+  .sector-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .sector-chips button {
+    flex: 0 0 auto;
+  }
+
+  .back-top {
+    right: 10px;
+    bottom: 10px;
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: .78rem;
+  }
+}

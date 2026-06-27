@@ -14,6 +14,7 @@ if (!appRoot) {
 }
 
 const app = appRoot;
+const PAGE_SIZE = 50;
 
 type ViewMode = "cards" | "table";
 type SortKey = "final" | "value" | "quality" | "balance" | "growth" | "momentum" | "trapRisk" | "upside" | "ticker" | "price" | "trade";
@@ -22,7 +23,8 @@ let viewMode: ViewMode = "cards";
 let sortKey: SortKey = "final";
 let trackMessage = "";
 let tickerSearchMessage = "";
-let pendingTickerFocus = "";
+let focusedTicker = "";
+let resultLimit = PAGE_SIZE;
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
 let filters: FilterState = {
@@ -42,7 +44,10 @@ function render(): void {
   const allStocks = mergeStocks(customStocks);
   const scored = scoreAll(allStocks);
   const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
-  const visible = applyFilters(scored, filters).sort(bySelectedSort);
+  const filtered = applyFilters(scored, filters).sort(bySelectedSort);
+  const focusedStock = focusedTicker ? scored.find((stock) => stock.ticker === focusedTicker) : undefined;
+  const visible = focusedStock ? [focusedStock] : filtered;
+  const displayed = focusedStock ? visible : visible.slice(0, resultLimit);
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
 
   app.innerHTML = `
@@ -112,7 +117,8 @@ function render(): void {
             </select>
           </label>
         </div>
-        ${renderResults(visible)}
+        ${renderResultsStatus(displayed.length, visible.length, focusedStock)}
+        ${renderResults(displayed)}
       </section>
 
       <section class="section filter-panel" id="filters" aria-label="Filters">
@@ -123,6 +129,7 @@ function render(): void {
           </div>
           <p>Leave these alone at first. Use them when you want a cleaner list, less debt risk, or more analyst upside.</p>
         </div>
+        ${renderSectorChips(sectors)}
         <div class="filters">${renderFilters(sectors)}</div>
       </section>
 
@@ -178,11 +185,11 @@ function render(): void {
           <span id="csv-status">${customStocks.length} custom stocks saved</span>
         </div>
       </section>
+      <button class="back-top" type="button" data-back-top>Top</button>
     </main>
   `;
 
   bindEvents(scored);
-  focusPendingTicker();
 }
 
 function scoreAll(stocks: StockMetric[]): ScoredStock[] {
@@ -244,14 +251,14 @@ function applyFilters(stocks: ScoredStock[], filterState: FilterState): ScoredSt
 }
 
 function bindEvents(scored: ScoredStock[]): void {
-  bindSelect("universe-select", (value) => { filters = { ...filters, universe: value as StockUniverse }; render(); });
-  bindSelect("sector-filter", (value) => { filters = { ...filters, sector: value }; render(); });
-  bindNumber("min-value-score", (value) => { filters = { ...filters, minValueScore: value }; render(); });
-  bindNumber("max-debt-risk", (value) => { filters = { ...filters, maxDebtRisk: value }; render(); });
-  bindNumber("min-upside", (value) => { filters = { ...filters, minAnalystUpside: value }; render(); });
-  bindNumber("min-drawdown", (value) => { filters = { ...filters, minDrawdown: value }; render(); });
-  bindCheckbox("positive-fcf", (value) => { filters = { ...filters, positiveFcfOnly: value }; render(); });
-  bindCheckbox("avoid-traps", (value) => { filters = { ...filters, avoidValueTraps: value }; render(); });
+  bindSelect("universe-select", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, universe: value as StockUniverse }; render(); });
+  bindSelect("sector-filter", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, sector: value }; render(); });
+  bindNumber("min-value-score", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minValueScore: value }; render(); });
+  bindNumber("max-debt-risk", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, maxDebtRisk: value }; render(); });
+  bindNumber("min-upside", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minAnalystUpside: value }; render(); });
+  bindNumber("min-drawdown", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minDrawdown: value }; render(); });
+  bindCheckbox("positive-fcf", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, positiveFcfOnly: value }; render(); });
+  bindCheckbox("avoid-traps", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, avoidValueTraps: value }; render(); });
   bindSelect("sort-select", (value) => { sortKey = value as SortKey; render(); });
 
   document.querySelectorAll<HTMLButtonElement>("[data-sort-key]").forEach((button) => {
@@ -275,6 +282,52 @@ function bindEvents(scored: ScoredStock[]): void {
       viewMode = button.dataset.viewMode as ViewMode;
       render();
     });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-clear-search]").forEach((button) => {
+    button.addEventListener("click", () => {
+      clearFocus();
+      resultLimit = PAGE_SIZE;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-show-stock-universe]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const stock = scored.find((item) => item.ticker === button.dataset.showStockUniverse);
+      if (!stock) return;
+      filters = { ...filters, universe: defaultUniverseForStock(stock), sector: "All" };
+      clearFocus();
+      resultLimit = PAGE_SIZE;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-show-more]").forEach((button) => {
+    button.addEventListener("click", () => {
+      resultLimit += PAGE_SIZE;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-show-all-results]").forEach((button) => {
+    button.addEventListener("click", () => {
+      resultLimit = Number.MAX_SAFE_INTEGER;
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-sector-chip]").forEach((button) => {
+    button.addEventListener("click", () => {
+      clearFocus();
+      resultLimit = PAGE_SIZE;
+      filters = { ...filters, sector: button.dataset.sectorChip ?? "All" };
+      render();
+    });
+  });
+
+  document.querySelector<HTMLButtonElement>("[data-back-top]")?.addEventListener("click", () => {
+    document.querySelector("#top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   document.querySelectorAll<HTMLButtonElement>("[data-symbol]").forEach((button) => {
@@ -340,6 +393,8 @@ function bindEvents(scored: ScoredStock[]): void {
     if (result.stocks.length > 0) {
       customStocks = mergeCustomStocks(customStocks, result.stocks);
       saveCustomStocks(customStocks);
+      clearFocus();
+      resultLimit = PAGE_SIZE;
       filters = { ...filters, universe: "CUSTOM" };
       render();
     } else if (status) {
@@ -350,6 +405,8 @@ function bindEvents(scored: ScoredStock[]): void {
   document.querySelector<HTMLButtonElement>("#clear-custom")?.addEventListener("click", () => {
     customStocks = [];
     saveCustomStocks(customStocks);
+    clearFocus();
+    resultLimit = PAGE_SIZE;
     render();
   });
 }
@@ -365,42 +422,20 @@ function searchTicker(scored: ScoredStock[]): void {
 
   const stock = scored.find((item) => item.ticker.toUpperCase() === ticker);
   if (!stock) {
+    focusedTicker = "";
     tickerSearchMessage = `${ticker} is not in the loaded lists yet. Add it with CSV import if you want it here.`;
     render();
     return;
   }
 
-  const isVisibleNow = applyFilters(scored, filters).some((item) => item.ticker === stock.ticker);
-  if (!isVisibleNow) {
-    filters = {
-      universe: defaultUniverseForStock(stock),
-      sector: "All",
-      minValueScore: 0,
-      maxDebtRisk: 100,
-      positiveFcfOnly: false,
-      minAnalystUpside: 0,
-      minDrawdown: 0,
-      avoidValueTraps: false
-    };
-  }
-  viewMode = "cards";
-  tickerSearchMessage = `Found ${stock.ticker}: ${stock.companyName}`;
-  pendingTickerFocus = stock.ticker;
+  focusedTicker = stock.ticker;
+  const stockUniverse = defaultUniverseForStock(stock);
+  tickerSearchMessage = stockUniverse === filters.universe || filters.universe === "ALL"
+    ? `Showing ${stock.ticker} only.`
+    : `${stock.ticker} is in ${universeName(stockUniverse)}. Showing it now.`;
   render();
 }
 
-function focusPendingTicker(): void {
-  if (!pendingTickerFocus) return;
-  const ticker = pendingTickerFocus;
-  pendingTickerFocus = "";
-  window.setTimeout(() => {
-    const target = document.querySelector<HTMLElement>(`[data-stock-ticker="${cssEscape(ticker)}"]`);
-    if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-    target.classList.add("stock-focus");
-    window.setTimeout(() => target.classList.remove("stock-focus"), 2600);
-  }, 0);
-}
 
 function defaultUniverseForStock(stock: ScoredStock): StockUniverse {
   if (filters.universe !== "ALL" && filterByUniverse([stock], filters.universe).length > 0) return filters.universe;
@@ -410,8 +445,53 @@ function defaultUniverseForStock(stock: ScoredStock): StockUniverse {
   return "ALL";
 }
 
-function cssEscape(value: string): string {
-  return typeof CSS !== "undefined" && CSS.escape ? CSS.escape(value) : value.replace(/"/g, "\\\"");
+
+function clearFocus(): void {
+  focusedTicker = "";
+  tickerSearchMessage = "";
+}
+
+function renderResultsStatus(displayedCount: number, totalCount: number, focusedStock: ScoredStock | undefined): string {
+  if (focusedStock) {
+    const universe = defaultUniverseForStock(focusedStock);
+    const sameUniverse = universe === filters.universe || filters.universe === "ALL";
+    const message = sameUniverse ? `Showing ${focusedStock.ticker} only.` : `${focusedStock.ticker} is in ${universeName(universe)}. Showing it now.`;
+    return `<div class="results-status search-focus"><strong>${escapeHtml(message)}</strong><div><button type="button" data-clear-search>Clear search</button><button type="button" data-show-stock-universe="${focusedStock.ticker}">Show all ${escapeHtml(universeName(universe))}</button></div></div>`;
+  }
+
+  const showMore = displayedCount < totalCount;
+  return `<div class="results-status"><strong>Showing ${displayedCount} of ${totalCount}.</strong><span>Sorted by ${escapeHtml(sortLabel(sortKey))}.</span>${showMore ? `<div><button type="button" data-show-more>Show next ${PAGE_SIZE}</button><button type="button" data-show-all-results>Show all</button></div>` : ""}</div>`;
+}
+
+function renderSectorChips(sectors: string[]): string {
+  return `<div class="sector-chips" aria-label="Sector shortcuts">${sectors.map((sector) => `<button type="button" data-sector-chip="${escapeHtml(sector)}" class="${sector === filters.sector ? "active" : ""}">${escapeHtml(sector)}</button>`).join("")}</div>`;
+}
+
+function sortLabel(key: SortKey): string {
+  const labels: Record<SortKey, string> = {
+    final: "Final Score",
+    value: "Value",
+    quality: "Quality",
+    balance: "Balance",
+    growth: "Growth",
+    momentum: "Momentum",
+    trapRisk: "Trap Risk",
+    upside: "Analyst Upside",
+    ticker: "Ticker",
+    price: "Price",
+    trade: "Trade Type"
+  };
+  return labels[key];
+}
+
+function universeName(universe: StockUniverse): string {
+  const names: Record<StockUniverse, string> = {
+    NASDAQ_100: "Nasdaq-100",
+    SP500: "S&P 500",
+    CUSTOM: "Custom Watchlist",
+    ALL: "All Stocks"
+  };
+  return names[universe];
 }
 
 function renderFilters(sectors: string[]): string {
@@ -461,7 +541,7 @@ function renderTable(stocks: ScoredStock[]): string {
 function tableHeader(label: string, key: SortKey): string {
   const active = sortKey === key;
   const direction = key === "ticker" || key === "trapRisk" || key === "trade" ? "ascending" : "descending";
-  const arrow = active ? (direction === "ascending" ? " ↑" : " ↓") : "";
+  const arrow = active ? (direction === "ascending" ? " ^" : " v") : "";
   return `<th><button class="sort-heading ${active ? "active" : ""}" type="button" data-sort-key="${key}" aria-sort="${active ? direction : "none"}">${escapeHtml(label)}${arrow}</button></th>`;
 }
 
