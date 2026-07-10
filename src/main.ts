@@ -1,5 +1,6 @@
 ﻿import "./styles.css";
 import type { ChartPoint } from "./data/freeChartData";
+import { freeMarketDataGeneratedAt } from "./data/freeMarketData";
 import { parseCsvWatchlist } from "./lib/csvImport";
 import { scoreStock } from "./lib/scoring";
 import { loadCustomStocks, loadTrackedTrades, saveCustomStocks, saveTrackedTrades } from "./lib/storage";
@@ -17,26 +18,77 @@ const app = appRoot;
 const PAGE_SIZE = 50;
 
 type ViewMode = "cards" | "table";
-type SortKey = "final" | "value" | "quality" | "balance" | "growth" | "momentum" | "trapRisk" | "upside" | "ticker" | "price" | "trade";
+type SortKey = "final" | "value" | "quality" | "balance" | "growth" | "momentum" | "trapRisk" | "upside" | "fcf" | "drawdown" | "ticker" | "price" | "trade";
+type ScreenPreset = "all" | "quality" | "deep" | "low-trap" | "custom";
 
-let viewMode: ViewMode = "cards";
+let viewMode: ViewMode = "table";
 let sortKey: SortKey = "final";
+let activeScreen: ScreenPreset = "all";
+let trackedOnly = false;
 let trackMessage = "";
 let tickerSearchMessage = "";
 let focusedTicker = "";
 let resultLimit = PAGE_SIZE;
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
-let filters: FilterState = {
-  universe: "NASDAQ_100",
-  sector: "All",
-  minValueScore: 0,
-  maxDebtRisk: 100,
-  positiveFcfOnly: false,
-  minAnalystUpside: 0,
-  minDrawdown: 0,
-  avoidValueTraps: false
-};
+let filters: FilterState = defaultFilters("NASDAQ_100");
+
+function defaultFilters(universe: StockUniverse): FilterState {
+  return {
+    universe,
+    sector: "All",
+    minValueScore: 0,
+    maxDebtRisk: 100,
+    positiveFcfOnly: false,
+    minAnalystUpside: 0,
+    minDrawdown: 0,
+    avoidValueTraps: false
+  };
+}
+
+function countActiveFilters(): number {
+  return Number(filters.sector !== "All") +
+    Number(filters.minValueScore > 0) +
+    Number(filters.maxDebtRisk < 100) +
+    Number(filters.positiveFcfOnly) +
+    Number(filters.minAnalystUpside > 0) +
+    Number(filters.minDrawdown > 0) +
+    Number(filters.avoidValueTraps) +
+    Number(trackedOnly);
+}
+
+function dataAgeDays(timestamp: string): number {
+  const generated = new Date(timestamp).getTime();
+  if (!Number.isFinite(generated)) return 0;
+  return Math.max(0, Math.floor((Date.now() - generated) / 86_400_000));
+}
+
+function dataAgeLabel(days: number): string {
+  if (days === 0) return "Updated today";
+  if (days === 1) return "1 day old";
+  return `${days} days old`;
+}
+
+function readableDate(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
+}
+
+function screenButton(preset: Exclude<ScreenPreset, "custom">, label: string): string {
+  return `<button type="button" data-screen-preset="${preset}" class="${activeScreen === preset ? "active" : ""}">${label}</button>`;
+}
+
+function summaryMetric(label: string, value: string, note: string): string {
+  return `<article><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></article>`;
+}
+
+function medianMetric(stocks: ScoredStock[], field: "analystUpsidePercent" | "freeCashFlowYield"): number {
+  const values = stocks
+    .filter((stock) => stock.hasMetrics !== false && Number.isFinite(stock[field]))
+    .map((stock) => stock[field]);
+  return median(values);
+}
 
 render();
 
@@ -44,36 +96,50 @@ function render(): void {
   const allStocks = mergeStocks(customStocks);
   const scored = scoreAll(allStocks);
   const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
-  const filtered = applyFilters(scored, filters).sort(bySelectedSort);
+  const filtered = applyFilters(scored, filters)
+    .filter((stock) => !trackedOnly || isTracked(stock.ticker))
+    .sort(bySelectedSort);
   const focusedStock = focusedTicker ? scored.find((stock) => stock.ticker === focusedTicker) : undefined;
   const visible = focusedStock ? [focusedStock] : filtered;
   const displayed = focusedStock ? visible : visible.slice(0, resultLimit);
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
+  const ageDays = dataAgeDays(freeMarketDataGeneratedAt);
+  const coverage = scored.length > 0 ? Math.round((metricStocks.length / scored.length) * 100) : 0;
+  const defaultedRows = metricStocks.filter((stock) => stock.notes.includes("Defaults used")).length;
+  const highConviction = visible.filter((stock) => stock.hasMetrics !== false && stock.finalRiskAdjustedValueScore >= 70 && stock.valueTrapRiskScore < 35).length;
+  const activeFilterCount = countActiveFilters();
 
   app.innerHTML = `
-    <header class="app-shell">
+    <header class="app-shell" id="top">
       <nav class="topbar" aria-label="Primary navigation">
         <a class="brand" href="#top" aria-label="Gensky Value Picker home">
           <span class="brand-mark">GV</span>
           <span><strong>Gensky Value Picker</strong><small>Research only</small></span>
         </a>
         <div class="top-actions">
-          <a href="#best-ideas">Best Ideas</a>
-          <a href="#filters">Filters</a>
+          <a href="#rankings">Scanner</a>
+          <a href="#best-ideas">Shortlists</a>
           <a href="#tracker">Tracker</a>
           <a href="#csv-import">CSV Import</a>
         </div>
       </nav>
-      <section class="hero scanner-controls" id="top" aria-label="Stock scanner controls">
-        <p class="warning">Research only. Verify data before decisions.</p>
-        <div class="universe-panel">
-          <label for="universe-select">Stock list</label>
-          <select id="universe-select">
-            ${option("NASDAQ_100", "Nasdaq-100", filters.universe)}
-            ${option("SP500", "S&P 500", filters.universe)}
-            ${option("CUSTOM", "Custom Watchlist", filters.universe)}
-            ${option("ALL", "All Stocks Combined", filters.universe)}
-          </select>
+      <section class="scanner-controls" aria-label="Stock scanner controls">
+        <div class="scanner-heading">
+          <div>
+            <p class="eyebrow">Research workspace</p>
+            <h1>Value scanner</h1>
+          </div>
+          <span class="data-badge ${ageDays > 3 ? "stale" : ""}">${dataAgeLabel(ageDays)}</span>
+        </div>
+        <div class="control-bar">
+          <label for="universe-select">Universe
+            <select id="universe-select">
+              ${option("NASDAQ_100", "Nasdaq-100", filters.universe)}
+              ${option("SP500", "S&P 500", filters.universe)}
+              ${option("CUSTOM", "Custom Watchlist", filters.universe)}
+              ${option("ALL", "All Stocks Combined", filters.universe)}
+            </select>
+          </label>
           <div class="ticker-search" role="search" aria-label="Ticker search">
             <label for="ticker-search">Find ticker</label>
             <div class="ticker-search-row">
@@ -82,6 +148,13 @@ function render(): void {
             </div>
             <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Type a ticker and jump to it."}</p>
           </div>
+        </div>
+        <div class="trust-strip" aria-label="Data status">
+          <span><strong>Data as of</strong>${readableDate(freeMarketDataGeneratedAt)}</span>
+          <span><strong>Coverage</strong>${coverage}% with metrics</span>
+          <span><strong>Defaulted rows</strong>${defaultedRows}</span>
+          <span><strong>Source</strong>Unofficial Yahoo Finance</span>
+          <span class="research-note"><strong>Research only</strong>Verify quotes and filings</span>
         </div>
       </section>
     </header>
@@ -92,11 +165,30 @@ function render(): void {
       <section class="section rankings-section" id="rankings">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Rankings</p>
+            <p class="eyebrow">Rankings / ${escapeHtml(universeName(filters.universe))}</p>
             <h2>${rankingTitle(filters.universe)}</h2>
           </div>
-          <p>Sorted by final risk-adjusted value.</p>
+          <p>Scores combine valuation, quality, balance sheet, growth, momentum, and trap risk.</p>
         </div>
+        <div class="summary-strip" aria-label="Current screen summary">
+          ${summaryMetric("Matches", String(visible.length), activeFilterCount ? `${activeFilterCount} active filters` : "Full selected universe")}
+          ${summaryMetric("High conviction", String(highConviction), "Final 70+ / trap below 35")}
+          ${summaryMetric("Median upside", `${formatNumber(medianMetric(visible, "analystUpsidePercent"))}%`, "Analyst target estimate")}
+          ${summaryMetric("Tracked", String(trackedTrades.length), trackedOnly ? "Showing tracked only" : "Saved locally")}
+        </div>
+        <div class="quick-screens" aria-label="Quick screens">
+          <span>Quick screen</span>
+          ${screenButton("all", "All")}
+          ${screenButton("quality", "Quality value")}
+          ${screenButton("deep", "Deep value")}
+          ${screenButton("low-trap", "Low trap risk")}
+          <button type="button" data-tracked-only class="${trackedOnly ? "active" : ""}">Tracked only</button>
+        </div>
+        <details class="filter-drawer" ${activeFilterCount > 0 && activeScreen === "custom" ? "open" : ""}>
+          <summary>Filters <span>${activeFilterCount ? `${activeFilterCount} active` : "Optional"}</span></summary>
+          ${renderSectorChips(sectors)}
+          <div class="filters">${renderFilters(sectors)}<button class="reset-filters" type="button" data-reset-filters>Reset filters</button></div>
+        </details>
         <div class="results-toolbar" aria-label="Results controls">
           <div class="view-switch" aria-label="Choose results view">
             <button type="button" data-view-mode="cards" class="${viewMode === "cards" ? "active" : ""}">Cards</button>
@@ -112,6 +204,8 @@ function render(): void {
               ${option("momentum", "Best momentum", sortKey)}
               ${option("trapRisk", "Lowest trap risk", sortKey)}
               ${option("upside", "Highest analyst upside", sortKey)}
+              ${option("fcf", "Highest free cash flow yield", sortKey)}
+              ${option("drawdown", "Largest one-year drawdown", sortKey)}
               ${option("ticker", "Ticker A to Z", sortKey)}
               ${option("trade", "Trade type A to Z", sortKey)}
             </select>
@@ -119,18 +213,6 @@ function render(): void {
         </div>
         ${renderResultsStatus(displayed.length, visible.length, focusedStock)}
         ${renderResults(displayed)}
-      </section>
-
-      <section class="section filter-panel" id="filters" aria-label="Filters">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow">Filters</p>
-            <h2>Narrow the list after you understand the scores.</h2>
-          </div>
-          <p>Leave these alone at first. Use them when you want a cleaner list, less debt risk, or more analyst upside.</p>
-        </div>
-        ${renderSectorChips(sectors)}
-        <div class="filters">${renderFilters(sectors)}</div>
       </section>
 
       <section class="section best-ideas" id="best-ideas">
@@ -252,14 +334,34 @@ function applyFilters(stocks: ScoredStock[], filterState: FilterState): ScoredSt
 
 function bindEvents(scored: ScoredStock[]): void {
   bindSelect("universe-select", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, universe: value as StockUniverse }; render(); });
-  bindSelect("sector-filter", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, sector: value }; render(); });
-  bindNumber("min-value-score", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minValueScore: value }; render(); });
-  bindNumber("max-debt-risk", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, maxDebtRisk: value }; render(); });
-  bindNumber("min-upside", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minAnalystUpside: value }; render(); });
-  bindNumber("min-drawdown", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minDrawdown: value }; render(); });
-  bindCheckbox("positive-fcf", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, positiveFcfOnly: value }; render(); });
-  bindCheckbox("avoid-traps", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, avoidValueTraps: value }; render(); });
+  bindSelect("sector-filter", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, sector: value }; render(); });
+  bindNumber("min-value-score", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minValueScore: value }; render(); });
+  bindNumber("max-debt-risk", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, maxDebtRisk: value }; render(); });
+  bindNumber("min-upside", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minAnalystUpside: value }; render(); });
+  bindNumber("min-drawdown", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minDrawdown: value }; render(); });
+  bindCheckbox("positive-fcf", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, positiveFcfOnly: value }; render(); });
+  bindCheckbox("avoid-traps", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, avoidValueTraps: value }; render(); });
   bindSelect("sort-select", (value) => { sortKey = value as SortKey; render(); });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-screen-preset]").forEach((button) => {
+    button.addEventListener("click", () => applyScreenPreset(button.dataset.screenPreset as Exclude<ScreenPreset, "custom">));
+  });
+
+  document.querySelector<HTMLButtonElement>("[data-tracked-only]")?.addEventListener("click", () => {
+    trackedOnly = !trackedOnly;
+    clearFocus();
+    resultLimit = PAGE_SIZE;
+    render();
+  });
+
+  document.querySelector<HTMLButtonElement>("[data-reset-filters]")?.addEventListener("click", () => {
+    filters = defaultFilters(filters.universe);
+    activeScreen = "all";
+    trackedOnly = false;
+    clearFocus();
+    resultLimit = PAGE_SIZE;
+    render();
+  });
 
   document.querySelectorAll<HTMLButtonElement>("[data-sort-key]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -319,6 +421,7 @@ function bindEvents(scored: ScoredStock[]): void {
 
   document.querySelectorAll<HTMLButtonElement>("[data-sector-chip]").forEach((button) => {
     button.addEventListener("click", () => {
+      activeScreen = "custom";
       clearFocus();
       resultLimit = PAGE_SIZE;
       filters = { ...filters, sector: button.dataset.sectorChip ?? "All" };
@@ -411,6 +514,31 @@ function bindEvents(scored: ScoredStock[]): void {
   });
 }
 
+function applyScreenPreset(preset: Exclude<ScreenPreset, "custom">): void {
+  const universe = filters.universe;
+  const base = defaultFilters(universe);
+  activeScreen = preset;
+
+  if (preset === "quality") {
+    filters = { ...base, minValueScore: 55, maxDebtRisk: 55, positiveFcfOnly: true, avoidValueTraps: true };
+    sortKey = "final";
+  } else if (preset === "deep") {
+    filters = { ...base, minValueScore: 75, minDrawdown: 10, avoidValueTraps: true };
+    sortKey = "value";
+  } else if (preset === "low-trap") {
+    filters = { ...base, maxDebtRisk: 35, positiveFcfOnly: true, avoidValueTraps: true };
+    sortKey = "trapRisk";
+  } else {
+    filters = base;
+    trackedOnly = false;
+    sortKey = "final";
+  }
+
+  clearFocus();
+  resultLimit = PAGE_SIZE;
+  render();
+}
+
 function searchTicker(scored: ScoredStock[]): void {
   const input = document.querySelector<HTMLInputElement>("#ticker-search");
   const ticker = input?.value.trim().toUpperCase() ?? "";
@@ -477,6 +605,8 @@ function sortLabel(key: SortKey): string {
     momentum: "Momentum",
     trapRisk: "Trap Risk",
     upside: "Analyst Upside",
+    fcf: "Free Cash Flow Yield",
+    drawdown: "One-Year Drawdown",
     ticker: "Ticker",
     price: "Price",
     trade: "Trade Type"
@@ -528,7 +658,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            ${tableHeader("Ticker", "ticker")}${tableHeader("$", "price")}${tableHeader("Final", "final")}${tableHeader("Value", "value")}${tableHeader("Qual", "quality")}${tableHeader("Bal", "balance")}${tableHeader("Grow", "growth")}${tableHeader("Mom", "momentum")}${tableHeader("Trap", "trapRisk")}${tableHeader("Trade", "trade")}<th>Track</th>
+            ${tableHeader("Ticker", "ticker")}${tableHeader("Price", "price")}${tableHeader("Final", "final")}${tableHeader("Value", "value")}${tableHeader("Quality", "quality")}${tableHeader("FCF yield", "fcf")}${tableHeader("Est. upside", "upside")}${tableHeader("Drawdown", "drawdown")}${tableHeader("Trap", "trapRisk")}${tableHeader("Idea", "trade")}<th>Track</th>
           </tr>
         </thead>
         <tbody>
@@ -566,7 +696,7 @@ function renderStockCard(stock: ScoredStock): string {
   return `
     <article class="stock-card" data-stock-ticker="${escapeHtml(stock.ticker)}">
       <div class="stock-card-main">
-        <button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button>
+        <button class="ticker-link" type="button" data-symbol="${escapeHtml(stock.ticker)}"><strong>${escapeHtml(stock.ticker)}</strong><small>${escapeHtml(stock.companyName)} / ${escapeHtml(stock.sector)}</small></button>
         <div class="stock-card-score">
           <small>Final</small>
           <span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span>
@@ -574,9 +704,10 @@ function renderStockCard(stock: ScoredStock): string {
       </div>
       <div class="stock-card-grid">
         ${metricTile("Price", currency(stock.price))}
-        ${metricTile("Sector", stock.sector)}
         ${metricTile("Value", formatScore(stock.valueScore))}
         ${metricTile("Quality", formatScore(stock.qualityScore))}
+        ${metricTile("FCF yield", `${formatNumber(stock.freeCashFlowYield)}%`)}
+        ${metricTile("Est. upside", `${formatNumber(stock.analystUpsidePercent)}%`)}
         ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
       </div>
       <div class="stock-card-note">
@@ -593,14 +724,14 @@ function renderStockRow(stock: ScoredStock): string {
   if (stock.hasMetrics === false) {
     return `
       <tr class="needs-data-row" data-stock-ticker="${escapeHtml(stock.ticker)}">
-        <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
+        <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${escapeHtml(stock.ticker)}"><strong>${escapeHtml(stock.ticker)}</strong><small>${escapeHtml(stock.companyName)} / ${escapeHtml(stock.sector)}</small></button></td>
         <td data-label="Price">--</td>
         <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
         <td data-label="Value">--</td>
         <td data-label="Quality">--</td>
-        <td data-label="Balance">--</td>
-        <td data-label="Growth">--</td>
-        <td data-label="Momentum">--</td>
+        <td data-label="FCF yield">--</td>
+        <td data-label="Estimated upside">--</td>
+        <td data-label="Drawdown">--</td>
         <td data-label="Trap risk">--</td>
         <td data-label="Trade"><strong>Import metrics</strong><details><summary>Why no trade?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
         <td data-label="Track"><button type="button" disabled>Needs data</button></td>
@@ -610,14 +741,14 @@ function renderStockRow(stock: ScoredStock): string {
 
   return `
     <tr data-stock-ticker="${escapeHtml(stock.ticker)}">
-      <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${stock.ticker}"><strong>${stock.ticker}</strong><small>${stock.companyName}</small></button></td>
+      <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${escapeHtml(stock.ticker)}"><strong>${escapeHtml(stock.ticker)}</strong><small>${escapeHtml(stock.companyName)} / ${escapeHtml(stock.sector)}</small></button></td>
       <td data-label="Price">${currency(stock.price)}</td>
       <td data-label="Final score"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
       <td data-label="Value">${formatScore(stock.valueScore)}</td>
       <td data-label="Quality">${formatScore(stock.qualityScore)}</td>
-      <td data-label="Balance">${formatScore(stock.balanceSheetScore)}</td>
-      <td data-label="Growth">${formatScore(stock.growthScore)}</td>
-      <td data-label="Momentum">${formatScore(stock.momentumSetupScore)}</td>
+      <td data-label="FCF yield" class="${stock.freeCashFlowYield >= 0 ? "positive" : "negative"}">${formatNumber(stock.freeCashFlowYield)}%</td>
+      <td data-label="Estimated upside" class="${stock.analystUpsidePercent >= 0 ? "positive" : "negative"}">${formatNumber(stock.analystUpsidePercent)}%</td>
+      <td data-label="Drawdown">${formatNumber(stock.oneYearDrawdownPercent)}%</td>
       <td data-label="Trap risk"><span class="risk ${riskTone(stock.valueTrapRiskScore)}">${formatScore(stock.valueTrapRiskScore)}</span></td>
       <td data-label="Trade"><strong>${stock.tradeIdea.action}</strong><details><summary>Why this idea?</summary>${renderTradeWhy(stock.tradeIdea.why)}</details></td>
       <td data-label="Track">${trackButton(stock)}</td>
@@ -627,7 +758,7 @@ function renderStockRow(stock: ScoredStock): string {
 
 async function openStockPanel(stock: ScoredStock): Promise<void> {
   document.querySelector("[data-chart-modal]")?.remove();
-  const { freeChartData } = await import("./data/freeChartData");
+  const { freeChartData, freeChartDataGeneratedAt } = await import("./data/freeChartData");
   const points = freeChartData[stock.ticker] ?? [];
   document.body.insertAdjacentHTML("beforeend", `
     <div class="chart-modal" data-chart-modal role="dialog" aria-modal="true" aria-label="${escapeHtml(stock.ticker)} chart">
@@ -656,7 +787,7 @@ async function openStockPanel(stock: ScoredStock): Promise<void> {
         <div class="chart-thesis">
           <strong>${escapeHtml(stock.tradeIdea.action)}</strong>
           ${renderTradeWhy(stock.tradeIdea.why)}
-          <small>Chart data is a generated one-year weekly view from free Yahoo Finance data. Research only; verify current quotes and filings.</small>
+          <small>Weekly chart snapshot generated ${readableDate(freeChartDataGeneratedAt)} from free Yahoo Finance data. Research only; verify current quotes and filings.</small>
         </div>
       </section>
     </div>
@@ -838,6 +969,8 @@ function bySelectedSort(a: ScoredStock, b: ScoredStock): number {
     growth: "growthScore",
     momentum: "momentumSetupScore",
     upside: "analystUpsidePercent",
+    fcf: "freeCashFlowYield",
+    drawdown: "oneYearDrawdownPercent",
     price: "price"
   };
   const field = fields[sortKey];

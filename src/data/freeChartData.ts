@@ -4,6 +4,8 @@
 // Failed tickers: ECHO (not enough chart points returned)
 export type ChartPoint = [date: string, open: number, high: number, low: number, close: number, volume: number];
 
+export const freeChartDataGeneratedAt = "2026-06-26T20:22:23.418Z";
+
 export const freeChartData: Record<string, ChartPoint[]> = {
   "A": [
     ["2025-06-23", 114.95, 120.54, 113.7, 119.17, 8306400],
