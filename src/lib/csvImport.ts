@@ -1,4 +1,5 @@
 import type { CsvImportResult, StockMetric } from "../types";
+import { CORE_METRIC_FIELDS } from "./scoring";
 
 const HEADER_ALIASES: Record<string, keyof StockMetric> = {
   ticker: "ticker",
@@ -43,6 +44,7 @@ export function parseCsvWatchlist(text: string): CsvImportResult {
   const headers = splitCsvLine(lines[0]).map(normalizeHeader);
   const mappedHeaders = headers.map((header) => HEADER_ALIASES[header]);
   const errors: string[] = [];
+  const warnings: string[] = [];
   const stocks: StockMetric[] = [];
 
   lines.slice(1).forEach((line, rowIndex) => {
@@ -57,6 +59,13 @@ export function parseCsvWatchlist(text: string): CsvImportResult {
       errors.push(`Row ${rowIndex + 2}: missing ticker.`);
       return;
     }
+
+    const missingMetrics = CORE_METRIC_FIELDS.filter((field) => {
+      const value = row[field as keyof StockMetric];
+      return value === undefined || String(value).trim() === "";
+    });
+    const dataConfidence = Math.round(((CORE_METRIC_FIELDS.length - missingMetrics.length) / CORE_METRIC_FIELDS.length) * 100);
+    if (missingMetrics.length) warnings.push(`Row ${rowIndex + 2} (${ticker}): defaulted ${missingMetrics.join(", ")}.`);
 
     stocks.push({
       ticker,
@@ -80,12 +89,15 @@ export function parseCsvWatchlist(text: string): CsvImportResult {
       oneYearDrawdownPercent: numberValue(row.oneYearDrawdownPercent, 12),
       momentumScore: numberValue(row.momentumScore, 50),
       qualityScore: numberValue(row.qualityScore, 55),
-      notes: stringValue(row.notes, "Imported CSV watchlist stock"),
-      hasMetrics: true
+      notes: [stringValue(row.notes, "Imported CSV watchlist stock"), missingMetrics.length ? `Defaults used for: ${missingMetrics.join(", ")}.` : ""]
+        .filter(Boolean).join(" "),
+      hasMetrics: dataConfidence >= 65,
+      dataConfidence,
+      missingMetrics
     });
   });
 
-  return { stocks, errors };
+  return { stocks, errors, warnings };
 }
 
 function normalizeHeader(value: string): string {

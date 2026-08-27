@@ -26,6 +26,10 @@ export interface StockMetric {
   qualityScore: number;
   notes: string;
   hasMetrics?: boolean;
+  /** 0-100, based on the share of core inputs that came from the source. */
+  dataConfidence?: number;
+  /** Core fields that were filled with neutral defaults rather than observed. */
+  missingMetrics?: string[];
 }
 
 export interface ScoreBreakdown {
@@ -35,6 +39,7 @@ export interface ScoreBreakdown {
   growthScore: number;
   momentumSetupScore: number;
   valueTrapRiskScore: number;
+  dataConfidenceScore: number;
   finalRiskAdjustedValueScore: number;
   debtRisk: number;
   category: ValueCategory;
@@ -45,6 +50,7 @@ export interface ScoreBreakdown {
     weakEarningsGrowthPenalty: number;
     valueTrapPenalty: number;
     cyclicalBusinessPenalty: number;
+    dataQualityPenalty: number;
   };
 }
 
@@ -76,6 +82,28 @@ export interface TrackerEntry {
   valueTrapRiskScore: number;
   notes: string;
   status: "Watching" | "Paper open" | "Closed";
+  entryPrice?: number;
+  quantity?: number;
+  thesis?: string;
+  invalidation?: string;
+  dataConfidenceScore?: number;
+}
+
+export interface OptionContext {
+  ivRank?: number;
+  ivPercentile?: number;
+  expectedMovePercent?: number;
+  putSkewPercent?: number;
+  frontBackIvRatio?: number;
+  daysToEarnings?: number;
+  catalystNote?: string;
+}
+
+export interface OptionRecommendation {
+  structure: "Shares / LEAPS" | "Bull call spread" | "Cash-secured put" | "Defined-risk only" | "Wait / watch";
+  conviction: "High" | "Medium" | "Low";
+  why: string;
+  guardrail: string;
 }
 
 export interface FilterState {
@@ -92,4 +120,5 @@ export interface FilterState {
 export type CsvImportResult = {
   stocks: StockMetric[];
   errors: string[];
+  warnings?: string[];
 };

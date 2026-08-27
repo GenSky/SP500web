@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/build.mjs",
+    "test": "node scripts/verify-strategy.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "refresh:free-data": "node scripts/fetch-free-market-data.mjs",
     "refresh:free-charts": "node scripts/fetch-free-chart-data.mjs",
-    "refresh:free-all": "npm run refresh:free-data && npm run refresh:free-charts"
+    "refresh:strategy-history": "node scripts/build-strategy-history.mjs",
+    "backfill:strategy-history": "node scripts/build-strategy-history.mjs --from-git",
+    "refresh:free-all": "npm run refresh:free-data && npm run refresh:free-charts && npm run refresh:strategy-history"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

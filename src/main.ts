@@ -2,11 +2,13 @@
 import type { ChartPoint } from "./data/freeChartData";
 import { freeMarketDataGeneratedAt } from "./data/freeMarketData";
 import { parseCsvWatchlist } from "./lib/csvImport";
+import { recommendOptionStructure } from "./lib/optionPolicy";
 import { scoreStock } from "./lib/scoring";
-import { loadCustomStocks, loadTrackedTrades, saveCustomStocks, saveTrackedTrades } from "./lib/storage";
+import { loadCustomStocks, loadOptionContexts, loadTrackedTrades, saveCustomStocks, saveOptionContexts, saveTrackedTrades } from "./lib/storage";
+import { backtestsForThreshold, historyCoverage, marketRegime, riskSizing, sectorRelative, tickerScoreHistory } from "./lib/strategyResearch";
 import { pickTrade } from "./lib/tradePicker";
 import { displayUniverse, filterByUniverse, mergeStocks } from "./lib/universes";
-import type { FilterState, ScoredStock, StockMetric, StockUniverse, TrackerEntry, TradeUniverse } from "./types";
+import type { FilterState, OptionContext, ScoredStock, StockMetric, StockUniverse, TrackerEntry, TradeUniverse } from "./types";
 
 const appRoot = document.querySelector<HTMLDivElement>("#app");
 
@@ -29,9 +31,21 @@ let trackMessage = "";
 let tickerSearchMessage = "";
 let focusedTicker = "";
 let resultLimit = PAGE_SIZE;
+let strategyThreshold = 70;
 let customStocks = loadCustomStocks();
 let trackedTrades = loadTrackedTrades();
+let optionContexts = loadOptionContexts();
 let filters: FilterState = defaultFilters("NASDAQ_100");
+let colorTheme = localStorage.getItem("gensky.valuePicker.theme.v1") === "dark" ? "dark" : "light";
+document.documentElement.dataset.theme = colorTheme;
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+  const target = event.target as HTMLElement | null;
+  if (target?.matches("input, textarea, select, [contenteditable]")) return;
+  event.preventDefault();
+  document.querySelector<HTMLInputElement>("#ticker-search")?.focus();
+});
 
 function defaultFilters(universe: StockUniverse): FilterState {
   return {
@@ -96,6 +110,7 @@ function render(): void {
   const allStocks = mergeStocks(customStocks);
   const scored = scoreAll(allStocks);
   const metricStocks = scored.filter((stock) => stock.hasMetrics !== false);
+  const trustedStocks = metricStocks.filter((stock) => stock.dataConfidenceScore >= 80);
   const filtered = applyFilters(scored, filters)
     .filter((stock) => !trackedOnly || isTracked(stock.ticker))
     .sort(bySelectedSort);
@@ -104,9 +119,9 @@ function render(): void {
   const displayed = focusedStock ? visible : visible.slice(0, resultLimit);
   const sectors = ["All", ...Array.from(new Set(scored.map((stock) => stock.sector))).sort()];
   const ageDays = dataAgeDays(freeMarketDataGeneratedAt);
-  const coverage = scored.length > 0 ? Math.round((metricStocks.length / scored.length) * 100) : 0;
-  const defaultedRows = metricStocks.filter((stock) => stock.notes.includes("Defaults used")).length;
-  const highConviction = visible.filter((stock) => stock.hasMetrics !== false && stock.finalRiskAdjustedValueScore >= 70 && stock.valueTrapRiskScore < 35).length;
+  const coverage = scored.length > 0 ? Math.round((trustedStocks.length / scored.length) * 100) : 0;
+  const defaultedRows = metricStocks.filter((stock) => stock.dataConfidenceScore < 100).length;
+  const highConviction = visible.filter((stock) => stock.hasMetrics !== false && stock.dataConfidenceScore >= 80 && stock.finalRiskAdjustedValueScore >= 70 && stock.valueTrapRiskScore < 35).length;
   const activeFilterCount = countActiveFilters();
 
   app.innerHTML = `
@@ -118,16 +133,19 @@ function render(): void {
         </a>
         <div class="top-actions">
           <a href="#rankings">Scanner</a>
+          <a href="#strategy-lab">Strategy Lab</a>
           <a href="#best-ideas">Shortlists</a>
           <a href="#tracker">Tracker</a>
           <a href="#csv-import">CSV Import</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">${colorTheme === "dark" ? "Light" : "Dark"}</button>
         </div>
       </nav>
       <section class="scanner-controls" aria-label="Stock scanner controls">
         <div class="scanner-heading">
           <div>
-            <p class="eyebrow">Research workspace</p>
-            <h1>Value scanner</h1>
+            <p class="eyebrow">Mean-reversion research workspace</p>
+            <h1>Find fear the fundamentals can survive.</h1>
+            <p class="hero-copy">Cross-check beaten-down valuation with quality, data confidence, sector context, trap risk, and actual forward-return evidence.</p>
           </div>
           <span class="data-badge ${ageDays > 3 ? "stale" : ""}">${dataAgeLabel(ageDays)}</span>
         </div>
@@ -143,16 +161,16 @@ function render(): void {
           <div class="ticker-search" role="search" aria-label="Ticker search">
             <label for="ticker-search">Find ticker</label>
             <div class="ticker-search-row">
-              <input id="ticker-search" type="search" autocomplete="off" placeholder="CMG, AAPL, MSFT">
+              <input id="ticker-search" type="search" autocomplete="off" placeholder="CMG, AAPL, MSFT" aria-keyshortcuts="/">
               <button id="ticker-search-button" type="button">Find</button>
             </div>
-            <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Type a ticker and jump to it."}</p>
+            <p class="search-status">${tickerSearchMessage ? escapeHtml(tickerSearchMessage) : "Press / to search any loaded ticker."}</p>
           </div>
         </div>
         <div class="trust-strip" aria-label="Data status">
           <span><strong>Data as of</strong>${readableDate(freeMarketDataGeneratedAt)}</span>
-          <span><strong>Coverage</strong>${coverage}% with metrics</span>
-          <span><strong>Defaulted rows</strong>${defaultedRows}</span>
+          <span><strong>Trusted coverage</strong>${coverage}% at 80%+ confidence</span>
+          <span><strong>Incomplete rows</strong>${defaultedRows} confidence-adjusted</span>
           <span><strong>Source</strong>Unofficial Yahoo Finance</span>
           <span class="research-note"><strong>Research only</strong>Verify quotes and filings</span>
         </div>
@@ -215,6 +233,8 @@ function render(): void {
         ${renderResults(displayed)}
       </section>
 
+      ${renderStrategyLab(scored)}
+
       <section class="section best-ideas" id="best-ideas">
         <div class="section-heading compact">
           <div>
@@ -249,7 +269,7 @@ function render(): void {
             <h2>Tracked trades store their source universe.</h2>
           </div>
         </div>
-        ${renderTracker()}
+        ${renderTracker(scored)}
       </section>
 
       <section class="section csv-section" id="csv-import">
@@ -274,6 +294,55 @@ function render(): void {
   bindEvents(scored);
 }
 
+function renderStrategyLab(stocks: ScoredStock[]): string {
+  const coverage = historyCoverage();
+  const regime = marketRegime(stocks);
+  const summaries = backtestsForThreshold(strategyThreshold);
+  const qualifiedNow = stocks.filter((stock) => stock.hasMetrics !== false && stock.dataConfidenceScore >= 80 && stock.valueTrapRiskScore < 55 && stock.finalRiskAdjustedValueScore >= strategyThreshold);
+  const completed = summaries.filter((summary) => summary.eventCount > 0);
+  const totalEvents = completed.reduce((sum, summary) => sum + summary.eventCount, 0);
+  return `
+    <section class="section strategy-lab" id="strategy-lab">
+      <div class="strategy-glow" aria-hidden="true"></div>
+      <div class="strategy-head">
+        <div>
+          <p class="eyebrow">Strategy Lab / observed evidence</p>
+          <h2>What happened after a score first crossed the line?</h2>
+          <p>Strict event-time results: prior snapshot below, new snapshot above, confidence 80%+, trap risk below 55. No cherry-picked WDAY-only story.</p>
+        </div>
+        <div class="threshold-switch" aria-label="Signal threshold">
+          <span>Score trigger</span>
+          ${[70, 75, 80].map((threshold) => `<button type="button" data-strategy-threshold="${threshold}" class="${strategyThreshold === threshold ? "active" : ""}">${threshold}+</button>`).join("")}
+        </div>
+      </div>
+      <div class="strategy-context">
+        <article><small>Current regime proxy</small><strong>${escapeHtml(regime.label)}</strong><span>${escapeHtml(regime.detail)}</span></article>
+        <article><small>Qualified now</small><strong>${qualifiedNow.length}</strong><span>Score ${strategyThreshold}+ / trusted / trap-filtered</span></article>
+        <article><small>Saved history</small><strong>${coverage.snapshots} snapshots</strong><span>${escapeHtml(coverage.first)} to ${escapeHtml(coverage.last)}</span></article>
+        <article><small>Completed observations</small><strong>${totalEvents}</strong><span>Across the available horizons</span></article>
+      </div>
+      <div class="event-grid">
+        ${summaries.map(renderBacktestCard).join("")}
+      </div>
+      <div class="methodology-note">
+        <strong>Read this honestly.</strong>
+        <span>Returns are close-to-close, exclude dividends and costs, and use the repository's saved snapshots—not a complete daily institutional database. Sector excess is measured against the median same-sector stock. The 60-day card stays unavailable until enough future snapshots exist. This is an evidence layer, not proof of a deployable edge.</span>
+      </div>
+    </section>`;
+}
+
+function renderBacktestCard(summary: ReturnType<typeof backtestsForThreshold>[number]): string {
+  if (!summary.eventCount) {
+    return `<article class="event-card pending"><div><small>${summary.horizon}-snapshot forward</small><span>Building sample</span></div><strong>—</strong><p>Not enough completed event windows yet.</p></article>`;
+  }
+  return `<article class="event-card">
+    <div><small>${summary.horizon}-snapshot forward</small><span>${summary.eventCount} events</span></div>
+    <strong class="${summary.medianReturn >= 0 ? "positive" : "negative"}">${summary.medianReturn >= 0 ? "+" : ""}${formatNumber(summary.medianReturn)}%</strong>
+    <p>Median raw return · ${formatNumber(summary.winRate)}% winners · ${summary.medianSectorExcess >= 0 ? "+" : ""}${formatNumber(summary.medianSectorExcess)}% vs sector</p>
+    <small class="holdout-read">${summary.holdoutEventCount ? `Holdout: ${summary.holdoutEventCount} events / ${summary.holdoutMedianReturn >= 0 ? "+" : ""}${formatNumber(summary.holdoutMedianReturn)}% median` : "Chronological holdout still building"}</small>
+  </article>`;
+}
+
 function scoreAll(stocks: StockMetric[]): ScoredStock[] {
   return stocks.map((stock) => {
     if (stock.hasMetrics === false) {
@@ -285,6 +354,7 @@ function scoreAll(stocks: StockMetric[]): ScoredStock[] {
         growthScore: 0,
         momentumSetupScore: 0,
         valueTrapRiskScore: 0,
+        dataConfidenceScore: 0,
         finalRiskAdjustedValueScore: 0,
         debtRisk: 0,
         category: "Needs data",
@@ -294,7 +364,8 @@ function scoreAll(stocks: StockMetric[]): ScoredStock[] {
           decliningRevenuePenalty: 0,
           weakEarningsGrowthPenalty: 0,
           valueTrapPenalty: 0,
-          cyclicalBusinessPenalty: 0
+          cyclicalBusinessPenalty: 0,
+          dataQualityPenalty: 0
         },
         tradeIdea: {
           action: "Needs data",
@@ -333,6 +404,20 @@ function applyFilters(stocks: ScoredStock[], filterState: FilterState): ScoredSt
 }
 
 function bindEvents(scored: ScoredStock[]): void {
+  document.querySelector<HTMLButtonElement>("[data-theme-toggle]")?.addEventListener("click", () => {
+    colorTheme = colorTheme === "dark" ? "light" : "dark";
+    localStorage.setItem("gensky.valuePicker.theme.v1", colorTheme);
+    document.documentElement.dataset.theme = colorTheme;
+    render();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-strategy-threshold]").forEach((button) => {
+    button.addEventListener("click", () => {
+      strategyThreshold = Number(button.dataset.strategyThreshold) || 70;
+      render();
+      document.querySelector("#strategy-lab")?.scrollIntoView({ block: "start" });
+    });
+  });
   bindSelect("universe-select", (value) => { clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, universe: value as StockUniverse }; render(); });
   bindSelect("sector-filter", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, sector: value }; render(); });
   bindNumber("min-value-score", (value) => { activeScreen = "custom"; clearFocus(); resultLimit = PAGE_SIZE; filters = { ...filters, minValueScore: value }; render(); });
@@ -436,7 +521,7 @@ function bindEvents(scored: ScoredStock[]): void {
   document.querySelectorAll<HTMLButtonElement>("[data-symbol]").forEach((button) => {
     button.addEventListener("click", () => {
       const stock = scored.find((item) => item.ticker === button.dataset.symbol);
-      if (stock) void openStockPanel(stock);
+      if (stock) void openStockPanel(stock, scored);
     });
   });
 
@@ -461,7 +546,12 @@ function bindEvents(scored: ScoredStock[]): void {
           finalRiskAdjustedValueScore: stock.finalRiskAdjustedValueScore,
           valueTrapRiskScore: stock.valueTrapRiskScore,
           notes: stock.tradeIdea.why,
-          status: "Watching"
+          status: "Watching",
+          entryPrice: stock.price,
+          quantity: 1,
+          thesis: "",
+          invalidation: "",
+          dataConfidenceScore: stock.dataConfidenceScore
         },
         ...trackedTrades
       ];
@@ -489,6 +579,29 @@ function bindEvents(scored: ScoredStock[]): void {
     });
   });
 
+  document.querySelectorAll<HTMLButtonElement>("[data-cycle-status]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const entry = trackedTrades.find((item) => item.id === button.dataset.cycleStatus);
+      if (!entry) return;
+      const next: Record<TrackerEntry["status"], TrackerEntry["status"]> = { "Watching": "Paper open", "Paper open": "Closed", "Closed": "Watching" };
+      entry.status = next[entry.status];
+      saveTrackedTrades(trackedTrades);
+      render();
+    });
+  });
+
+  document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-tracker-field]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const entry = trackedTrades.find((item) => item.id === input.dataset.entryId);
+      if (!entry) return;
+      const field = input.dataset.trackerField;
+      if (field === "quantity") entry.quantity = Math.max(0, Number(input.value) || 0);
+      else if (field === "thesis") entry.thesis = input.value;
+      else if (field === "invalidation") entry.invalidation = input.value;
+      saveTrackedTrades(trackedTrades);
+    });
+  });
+
   document.querySelector<HTMLButtonElement>("#import-csv")?.addEventListener("click", () => {
     const textarea = document.querySelector<HTMLTextAreaElement>("#csv-text");
     const status = document.querySelector<HTMLSpanElement>("#csv-status");
@@ -499,6 +612,7 @@ function bindEvents(scored: ScoredStock[]): void {
       clearFocus();
       resultLimit = PAGE_SIZE;
       filters = { ...filters, universe: "CUSTOM" };
+      trackMessage = result.warnings?.length ? `Imported ${result.stocks.length} stocks. ${result.warnings.length} row(s) used defaults and were confidence-adjusted.` : `Imported ${result.stocks.length} stocks with complete core metrics.`;
       render();
     } else if (status) {
       status.textContent = result.errors.join(" ");
@@ -658,7 +772,7 @@ function renderTable(stocks: ScoredStock[]): string {
       <table>
         <thead>
           <tr>
-            ${tableHeader("Ticker", "ticker")}${tableHeader("Price", "price")}${tableHeader("Final", "final")}${tableHeader("Value", "value")}${tableHeader("Quality", "quality")}${tableHeader("FCF yield", "fcf")}${tableHeader("Est. upside", "upside")}${tableHeader("Drawdown", "drawdown")}${tableHeader("Trap", "trapRisk")}${tableHeader("Idea", "trade")}<th>Track</th>
+            ${tableHeader("Ticker", "ticker")}${tableHeader("Price", "price")}${tableHeader("Final", "final")}<th>Confidence</th>${tableHeader("Value", "value")}${tableHeader("Quality", "quality")}${tableHeader("FCF yield", "fcf")}${tableHeader("Est. upside", "upside")}${tableHeader("Drawdown", "drawdown")}${tableHeader("Trap", "trapRisk")}${tableHeader("Idea", "trade")}<th>Track</th>
           </tr>
         </thead>
         <tbody>
@@ -706,6 +820,7 @@ function renderStockCard(stock: ScoredStock): string {
         ${metricTile("Price", currency(stock.price))}
         ${metricTile("Value", formatScore(stock.valueScore))}
         ${metricTile("Quality", formatScore(stock.qualityScore))}
+        ${metricTile("Data confidence", `${formatScore(stock.dataConfidenceScore)}%`)}
         ${metricTile("FCF yield", `${formatNumber(stock.freeCashFlowYield)}%`)}
         ${metricTile("Est. upside", `${formatNumber(stock.analystUpsidePercent)}%`)}
         ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
@@ -727,6 +842,7 @@ function renderStockRow(stock: ScoredStock): string {
         <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${escapeHtml(stock.ticker)}"><strong>${escapeHtml(stock.ticker)}</strong><small>${escapeHtml(stock.companyName)} / ${escapeHtml(stock.sector)}</small></button></td>
         <td data-label="Price">--</td>
         <td data-label="Final score"><span class="status-pill muted">Needs data</span></td>
+        <td data-label="Confidence">—</td>
         <td data-label="Value">--</td>
         <td data-label="Quality">--</td>
         <td data-label="FCF yield">--</td>
@@ -743,7 +859,8 @@ function renderStockRow(stock: ScoredStock): string {
     <tr data-stock-ticker="${escapeHtml(stock.ticker)}">
       <td data-label="Ticker"><button class="ticker-link" type="button" data-symbol="${escapeHtml(stock.ticker)}"><strong>${escapeHtml(stock.ticker)}</strong><small>${escapeHtml(stock.companyName)} / ${escapeHtml(stock.sector)}</small></button></td>
       <td data-label="Price">${currency(stock.price)}</td>
-      <td data-label="Final score"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span></td>
+      <td data-label="Final score"><span class="score-stack"><span class="score-pill ${scoreTone(stock.finalRiskAdjustedValueScore)}">${formatScore(stock.finalRiskAdjustedValueScore)}</span><i style="--score:${Math.round(stock.finalRiskAdjustedValueScore)}%"></i></span></td>
+      <td data-label="Confidence"><span class="confidence-badge ${confidenceTone(stock.dataConfidenceScore)}">${formatScore(stock.dataConfidenceScore)}%</span></td>
       <td data-label="Value">${formatScore(stock.valueScore)}</td>
       <td data-label="Quality">${formatScore(stock.qualityScore)}</td>
       <td data-label="FCF yield" class="${stock.freeCashFlowYield >= 0 ? "positive" : "negative"}">${formatNumber(stock.freeCashFlowYield)}%</td>
@@ -756,33 +873,73 @@ function renderStockRow(stock: ScoredStock): string {
   `;
 }
 
-async function openStockPanel(stock: ScoredStock): Promise<void> {
+async function openStockPanel(stock: ScoredStock, allStocks: ScoredStock[]): Promise<void> {
   document.querySelector("[data-chart-modal]")?.remove();
   const { freeChartData, freeChartDataGeneratedAt } = await import("./data/freeChartData");
   const points = freeChartData[stock.ticker] ?? [];
+  const context = optionContexts[stock.ticker] ?? {};
+  const optionIdea = recommendOptionStructure(stock, context);
+  const sector = sectorRelative(stock, allStocks);
+  const sizing = riskSizing(stock);
   document.body.insertAdjacentHTML("beforeend", `
     <div class="chart-modal" data-chart-modal role="dialog" aria-modal="true" aria-label="${escapeHtml(stock.ticker)} chart">
       <button class="chart-backdrop" type="button" data-close-chart aria-label="Close chart"></button>
       <section class="chart-panel">
         <header class="chart-header">
           <div>
-            <p class="eyebrow">Ticker chart</p>
+            <p class="eyebrow">Ticker research cockpit</p>
             <h3>${escapeHtml(stock.ticker)} <span>${escapeHtml(stock.companyName)}</span></h3>
             <p>${escapeHtml(stock.sector)} / ${escapeHtml(stock.industry)} / ${escapeHtml(displayUniverse(stock))}</p>
           </div>
           <button class="chart-close" type="button" data-close-chart>Close</button>
         </header>
         ${points.length >= 2 ? renderPriceChart(points, stock) : `<div class="empty-state">Chart data is not available for ${escapeHtml(stock.ticker)} yet. Run the free chart refresh again later.</div>`}
+        ${renderScoreHistory(stock.ticker)}
         <div class="chart-stats">
           ${metricTile("Price", currency(stock.price))}
           ${metricTile("Final score", formatScore(stock.finalRiskAdjustedValueScore))}
           ${metricTile("Value", formatScore(stock.valueScore))}
           ${metricTile("Quality", formatScore(stock.qualityScore))}
           ${metricTile("Trap risk", formatScore(stock.valueTrapRiskScore))}
+          ${metricTile("Data confidence", `${formatScore(stock.dataConfidenceScore)}%`)}
+          ${metricTile("Sector percentile", `${sector.scorePercentile}th`)}
           ${metricTile("Forward P/E", formatNumber(stock.forwardPE))}
           ${metricTile("FCF yield", `${formatNumber(stock.freeCashFlowYield)}%`)}
           ${metricTile("Drawdown", `${formatNumber(stock.oneYearDrawdownPercent)}%`)}
           ${metricTile("Market cap", compactNumber(stock.marketCap))}
+          ${metricTile("Starter / max size", `${formatNumber(sizing.starterPercent)}% / ${formatNumber(sizing.maxPercent)}%`)}
+        </div>
+        <div class="research-grid">
+          <section class="option-lab">
+            <div class="option-lab-head">
+              <div><p class="eyebrow">IV-aware structure lab</p><h4>${escapeHtml(optionIdea.structure)}</h4></div>
+              <span class="conviction ${optionIdea.conviction.toLowerCase()}">${optionIdea.conviction} confidence</span>
+            </div>
+            <p>${escapeHtml(optionIdea.why)}</p>
+            <small>${escapeHtml(optionIdea.guardrail)}</small>
+            <div class="option-inputs">
+              ${optionInput("IV rank", "ivRank", context.ivRank, "0–100")}
+              ${optionInput("IV percentile", "ivPercentile", context.ivPercentile, "0–100")}
+              ${optionInput("Expected move %", "expectedMovePercent", context.expectedMovePercent, "e.g. 7.5")}
+              ${optionInput("Put skew %", "putSkewPercent", context.putSkewPercent, "e.g. 5")}
+              ${optionInput("Front/back IV", "frontBackIvRatio", context.frontBackIvRatio, "e.g. 1.10", "0.01")}
+              ${optionInput("Days to earnings", "daysToEarnings", context.daysToEarnings, "e.g. 24")}
+              <label class="catalyst-input">Catalyst / thesis<input data-option-field="catalystNote" type="text" value="${escapeHtml(context.catalystNote ?? "")}" placeholder="Earnings, product, margin reset…"></label>
+            </div>
+            <button type="button" data-save-option-context>Recalculate structure</button>
+            <p class="manual-data-note">Manual research inputs—not a live option feed. Leave unknown fields blank.</p>
+          </section>
+          <section class="risk-brief">
+            <p class="eyebrow">Risk and catalyst gate</p>
+            <h4>${escapeHtml(sector.label)}</h4>
+            <ul>
+              <li>${sector.drawdownGap >= 0 ? `${formatNumber(sector.drawdownGap)} points more beaten down than its sector median.` : `${formatNumber(Math.abs(sector.drawdownGap))} points less beaten down than its sector median.`}</li>
+              <li>Model starter ${formatNumber(sizing.starterPercent)}%; portfolio cap ${formatNumber(sizing.maxPercent)}%.</li>
+              <li>${context.daysToEarnings === undefined ? "Earnings timing is not entered—do not assume the calendar is clear." : context.daysToEarnings <= 10 ? `Binary event window: ${context.daysToEarnings} days to earnings.` : `${context.daysToEarnings} days to earnings.`}</li>
+              <li>${context.catalystNote ? `Catalyst: ${escapeHtml(context.catalystNote)}` : "No catalyst or thesis has been recorded yet."}</li>
+            </ul>
+            <small>${escapeHtml(sizing.stopRule)}</small>
+          </section>
         </div>
         <div class="chart-thesis">
           <strong>${escapeHtml(stock.tradeIdea.action)}</strong>
@@ -796,6 +953,20 @@ async function openStockPanel(stock: ScoredStock): Promise<void> {
   const modal = document.querySelector<HTMLElement>("[data-chart-modal]");
   const close = (): void => modal?.remove();
   modal?.querySelectorAll<HTMLButtonElement>("[data-close-chart]").forEach((button) => button.addEventListener("click", close));
+  modal?.querySelector<HTMLButtonElement>("[data-save-option-context]")?.addEventListener("click", () => {
+    const next: OptionContext = {};
+    modal.querySelectorAll<HTMLInputElement>("[data-option-field]").forEach((input) => {
+      const field = input.dataset.optionField as keyof OptionContext;
+      if (field === "catalystNote") {
+        if (input.value.trim()) next.catalystNote = input.value.trim();
+      } else if (input.value.trim() !== "") {
+        (next as Record<string, number | string>)[field] = Number(input.value);
+      }
+    });
+    optionContexts = { ...optionContexts, [stock.ticker]: next };
+    saveOptionContexts(optionContexts);
+    void openStockPanel(stock, allStocks);
+  });
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key === "Escape") {
       close();
@@ -803,6 +974,34 @@ async function openStockPanel(stock: ScoredStock): Promise<void> {
     }
   };
   document.addEventListener("keydown", onKeyDown);
+}
+
+function optionInput(label: string, field: keyof OptionContext, value: number | undefined, placeholder: string, step = "0.1"): string {
+  return `<label>${escapeHtml(label)}<input data-option-field="${field}" type="number" step="${step}" value="${value ?? ""}" placeholder="${escapeHtml(placeholder)}"></label>`;
+}
+
+function renderScoreHistory(ticker: string): string {
+  const history = tickerScoreHistory(ticker);
+  if (history.length < 2) return `<div class="history-empty"><strong>Score history is collecting</strong><span>A dated point will be added after each market refresh.</span></div>`;
+  const width = 860;
+  const height = 150;
+  const padX = 28;
+  const padY = 20;
+  const x = (index: number): number => padX + index / (history.length - 1) * (width - padX * 2);
+  const y = (score: number): number => padY + (100 - score) / 100 * (height - padY * 2);
+  const scorePath = linePath(history.map((point, index) => [x(index), y(point.score)]));
+  const trapPath = linePath(history.map((point, index) => [x(index), y(point.trap)]));
+  const latest = history.at(-1)!;
+  const first = history[0];
+  const change = latest.score - first.score;
+  return `<div class="score-history">
+    <div><span><strong>Saved score history</strong><small>${history.length} dated snapshots</small></span><b class="${change >= 0 ? "positive" : "negative"}">${change >= 0 ? "+" : ""}${formatNumber(change)} pts</b></div>
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(ticker)} score and trap-risk history">
+      ${[40, 60, 80].map((level) => `<line x1="${padX}" y1="${y(level)}" x2="${width - padX}" y2="${y(level)}"/><text x="3" y="${y(level) + 4}">${level}</text>`).join("")}
+      <path class="history-trap" d="${trapPath}"/><path class="history-score" d="${scorePath}"/>
+    </svg>
+    <footer><span>${escapeHtml(first.date)}</span><span><i class="score-key"></i>Score <i class="trap-key"></i>Trap risk</span><span>${escapeHtml(latest.date)}</span></footer>
+  </div>`;
 }
 
 function renderPriceChart(points: ChartPoint[], stock: ScoredStock): string {
@@ -904,22 +1103,51 @@ function segmentedLinePath(points: Array<[number, number] | null>): string {
 function metricTile(label: string, value: string): string {
   return `<article><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></article>`;
 }
-function renderTracker(): string {
+function renderTracker(stocks: ScoredStock[]): string {
   if (trackedTrades.length === 0) {
-    return `<div class="empty-state">No paper trades tracked yet.</div>`;
+    return `<div class="empty-state"><strong>No paper ideas yet.</strong><span>Track a stock to preserve its entry price, score, confidence and thesis.</span></div>`;
   }
 
-  return `<div class="tracker-list">
-    ${trackedTrades.map((entry) => `
-      <article class="tracker-card">
-        <div><strong>${entry.ticker}</strong><span>${entry.companyName}</span></div>
-        <div><small>Universe</small><span>${entry.universe}</span></div>
-        <div><small>Idea</small><span>${entry.action}</span></div>
-        <div><small>Final / Trap</small><span>${formatScore(entry.finalRiskAdjustedValueScore)} / ${formatScore(entry.valueTrapRiskScore)}</span></div>
-        <button type="button" data-remove-trade="${entry.id}">Remove</button>
-      </article>
-    `).join("")}
-  </div>`;
+  const rows = trackedTrades.map((entry) => {
+    const current = stocks.find((stock) => stock.ticker === entry.ticker);
+    const currentPrice = current?.price;
+    const returnPercent = entry.entryPrice && currentPrice ? (currentPrice - entry.entryPrice) / entry.entryPrice * 100 : undefined;
+    const pnl = returnPercent !== undefined && entry.entryPrice ? (currentPrice! - entry.entryPrice) * (entry.quantity ?? 1) : undefined;
+    return { entry, current, currentPrice, returnPercent, pnl };
+  });
+  const measured = rows.filter((row) => row.returnPercent !== undefined);
+  const avgReturn = measured.length ? measured.reduce((sum, row) => sum + (row.returnPercent ?? 0), 0) / measured.length : 0;
+  const winners = measured.filter((row) => (row.returnPercent ?? 0) > 0).length;
+
+  return `<div class="tracker-summary">
+      ${summaryMetric("Ideas", String(rows.length), `${rows.filter((row) => row.entry.status === "Paper open").length} paper open`)}
+      ${summaryMetric("Average return", measured.length ? `${avgReturn >= 0 ? "+" : ""}${formatNumber(avgReturn)}%` : "—", "Latest saved snapshot")}
+      ${summaryMetric("Winners", measured.length ? `${winners}/${measured.length}` : "—", "Unrealized paper results")}
+    </div>
+    <div class="tracker-list">
+      ${rows.map(({ entry, current, currentPrice, returnPercent, pnl }) => `
+        <article class="tracker-card expanded">
+          <header>
+            <button class="tracker-symbol" type="button" data-symbol="${escapeHtml(entry.ticker)}"><strong>${escapeHtml(entry.ticker)}</strong><span>${escapeHtml(entry.companyName)}</span></button>
+            <button class="status-pill tracker-status ${entry.status.toLowerCase().replace(" ", "-")}" type="button" data-cycle-status="${entry.id}">${entry.status}</button>
+          </header>
+          <div class="tracker-metrics">
+            <div><small>Entry / latest</small><strong>${entry.entryPrice ? currency(entry.entryPrice) : "Legacy entry"} / ${currentPrice ? currency(currentPrice) : "—"}</strong></div>
+            <div><small>Paper return</small><strong class="${(returnPercent ?? 0) >= 0 ? "positive" : "negative"}">${returnPercent === undefined ? "—" : `${returnPercent >= 0 ? "+" : ""}${formatNumber(returnPercent)}%`}</strong></div>
+            <div><small>P&amp;L</small><strong class="${(pnl ?? 0) >= 0 ? "positive" : "negative"}">${pnl === undefined ? "—" : currency(pnl)}</strong></div>
+            <div><small>Score now / entry</small><strong>${current ? formatScore(current.finalRiskAdjustedValueScore) : "—"} / ${formatScore(entry.finalRiskAdjustedValueScore)}</strong></div>
+            <div><small>Confidence</small><strong>${current ? `${formatScore(current.dataConfidenceScore)}%` : entry.dataConfidenceScore ? `${formatScore(entry.dataConfidenceScore)}%` : "—"}</strong></div>
+            <label><small>Quantity</small><input data-tracker-field="quantity" data-entry-id="${entry.id}" type="number" min="0" step="1" value="${entry.quantity ?? 1}"></label>
+          </div>
+          <div class="tracker-notes">
+            <label>Thesis<textarea data-tracker-field="thesis" data-entry-id="${entry.id}" rows="2" placeholder="Why should this mean-revert?">${escapeHtml(entry.thesis ?? "")}</textarea></label>
+            <label>Invalidation<textarea data-tracker-field="invalidation" data-entry-id="${entry.id}" rows="2" placeholder="What evidence proves the thesis wrong?">${escapeHtml(entry.invalidation ?? "")}</textarea></label>
+          </div>
+          <footer><span>${escapeHtml(entry.action)} · ${escapeHtml(entry.universe)} · added ${readableDate(entry.openedAt)}</span><button type="button" data-remove-trade="${entry.id}">Remove</button></footer>
+        </article>
+      `).join("")}
+    </div>
+    <p class="tracker-disclaimer">Paper results use the site's latest saved quote, not live execution prices. Status cycles Watching → Paper open → Closed.</p>`;
 }
 
 function renderTradeWhy(text: string): string {
@@ -1089,6 +1317,12 @@ function riskTone(value: number): string {
   if (value >= 70) return "bad";
   if (value >= 45) return "ok";
   return "good";
+}
+
+function confidenceTone(value: number): string {
+  if (value >= 90) return "good";
+  if (value >= 80) return "ok";
+  return "bad";
 }
 
 function formatScore(value: number | undefined): string {

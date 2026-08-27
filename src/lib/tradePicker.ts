@@ -1,8 +1,14 @@
 ﻿import type { ScoredStock, TradeIdea } from "../types";
 
 export function pickTrade(stock: ScoredStock): TradeIdea {
+  if (stock.dataConfidenceScore < 65) {
+    return {
+      action: "Needs data",
+      why: `Only ${Math.round(stock.dataConfidenceScore)}% of core inputs are observed. Refresh or import the missing fields before treating this as a signal.`
+    };
+  }
   const isSp500 = stock.indexMembership.includes("SP500");
-  const highQuality = stock.qualityScore >= 72 && stock.balanceSheetScore >= 65;
+  const highQuality = stock.qualityScore >= 72 && stock.balanceSheetScore >= 65 && stock.dataConfidenceScore >= 80;
   const undervalued = stock.valueScore >= 68 || stock.finalRiskAdjustedValueScore >= 64;
   const lowTrapRisk = stock.valueTrapRiskScore < 38;
   const highTrapRisk = stock.valueTrapRiskScore >= 70;
@@ -35,7 +41,7 @@ export function pickTrade(stock: ScoredStock): TradeIdea {
 }
 
 function buildWhy(stock: ScoredStock, action: TradeIdea["action"]): string {
-  const scoreLine = `Final ${score(stock.finalRiskAdjustedValueScore)}/100 | value ${score(stock.valueScore)}/100 | trap risk ${score(stock.valueTrapRiskScore)}/100.`;
+  const scoreLine = `Final ${score(stock.finalRiskAdjustedValueScore)}/100 | value ${score(stock.valueScore)}/100 | trap risk ${score(stock.valueTrapRiskScore)}/100 | confidence ${score(stock.dataConfidenceScore)}%.`;
   const reasonLine = [
     actionRead(action),
     valueRead(stock),

@@ -82,6 +82,22 @@ function mapQuote(stock, quote) {
   const high52 = finite(quote.summaryDetail?.fiftyTwoWeekHigh, NaN);
   const low52 = finite(quote.summaryDetail?.fiftyTwoWeekLow, NaN);
   const oneYearDrawdownPercent = Number.isFinite(high52) && Number.isFinite(price) && high52 > 0 ? Math.max(0, ((high52 - price) / high52) * 100) : NaN;
+  const coreSources = {
+    forwardPE,
+    trailingPE,
+    evToEbitda,
+    priceToFreeCashFlow,
+    freeCashFlowYield: fcfYield,
+    pegRatio,
+    revenueGrowthEstimate,
+    epsGrowthEstimate,
+    debtToEquity,
+    netDebtToEbitda,
+    analystUpsidePercent,
+    oneYearDrawdownPercent
+  };
+  const missingMetrics = Object.entries(coreSources).filter(([, value]) => !Number.isFinite(value)).map(([field]) => field);
+  const dataConfidence = Math.round(((Object.keys(coreSources).length - missingMetrics.length) / Object.keys(coreSources).length) * 100);
 
   const normalized = {
     ticker: stock.ticker,
@@ -89,7 +105,9 @@ function mapQuote(stock, quote) {
     indexMembership: stock.indexMembership,
     sector,
     industry,
-    hasMetrics: true,
+    hasMetrics: dataConfidence >= 65,
+    dataConfidence,
+    missingMetrics,
     marketCap: valueOrDefault(marketCap, 0),
     price: valueOrDefault(price, 0),
     forwardPE: valueOrDefault(forwardPE, 18),
@@ -111,29 +129,11 @@ function mapQuote(stock, quote) {
 
   normalized.momentumScore = momentumScore(normalized, low52, high52);
   normalized.qualityScore = qualityScore(normalized);
-  normalized.notes = buildNotes(stock.ticker, quote, normalized);
+  normalized.notes = buildNotes(stock.ticker, normalized.missingMetrics);
   return normalized;
 }
 
-function buildNotes(ticker, quote, stock) {
-  const missing = [];
-  const checks = [
-    ["marketCap", quote.price?.marketCap],
-    ["price", quote.price?.regularMarketPrice],
-    ["forwardPE", quote.summaryDetail?.forwardPE],
-    ["trailingPE", quote.summaryDetail?.trailingPE],
-    ["evToEbitda", quote.defaultKeyStatistics?.enterpriseToEbitda],
-    ["freeCashflow", quote.financialData?.freeCashflow],
-    ["pegRatio", quote.defaultKeyStatistics?.pegRatio],
-    ["revenueGrowth", quote.financialData?.revenueGrowth],
-    ["earningsGrowth", quote.financialData?.earningsGrowth],
-    ["debtToEquity", quote.financialData?.debtToEquity],
-    ["targetMeanPrice", quote.financialData?.targetMeanPrice],
-    ["52WeekHigh", quote.summaryDetail?.fiftyTwoWeekHigh]
-  ];
-  for (const [name, value] of checks) {
-    if (!Number.isFinite(Number(value))) missing.push(name);
-  }
+function buildNotes(ticker, missing) {
   const missingText = missing.length > 0 ? ` Defaults used for: ${missing.join(", ")}.` : "";
   return `${ticker} metrics from a free Yahoo Finance refresh.${missingText} Research only; verify with primary filings and current quotes.`;
 }
@@ -183,7 +183,9 @@ function formatStock(stock) {
     ["indexMembership", `[${stock.indexMembership.map(q).join(", ")}]`],
     ["sector", q(stock.sector)],
     ["industry", q(stock.industry)],
-    ["hasMetrics", "true"],
+    ["hasMetrics", String(stock.hasMetrics)],
+    ["dataConfidence", n(stock.dataConfidence)],
+    ["missingMetrics", `[${stock.missingMetrics.map(q).join(", ")}]`],
     ["marketCap", n(stock.marketCap)],
     ["price", n(stock.price)],
     ["forwardPE", n(stock.forwardPE)],
